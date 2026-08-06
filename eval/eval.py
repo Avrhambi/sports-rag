@@ -12,15 +12,21 @@ Run as: python -m eval.eval
 """
 
 import json
+import time
 from pathlib import Path
 
 from google import genai
+from google.genai import errors as genai_errors
 
 from src.config import GEMINI_API_KEY, GEMINI_MODEL_NAME
 from src.generate import generate_answer
 from src.retrieve import retrieve
 
 TESTSET_PATH = Path(__file__).resolve().parent / "qa_testset.json"
+
+# Free-tier Gemini quota is a handful of requests/minute; pace calls to stay under it
+# rather than let the whole run die on the first 429.
+RATE_LIMIT_DELAY_SECONDS = 13
 
 JUDGE_PROMPT = """You are grading a Hebrew answer to a sports-rules question.
 Score two things from 0 to 1 (a decimal number each), based only on the
@@ -55,16 +61,22 @@ def score_retrieval(item: dict, top_k: int = 4) -> dict:
 
 
 def score_generation(item: dict, chunks: list[dict]) -> dict | None:
-    """Ask Gemini to judge faithfulness/relevance. Returns None if no chunks or no API key."""
+    """Ask Gemini to judge faithfulness/relevance. Returns None if no chunks, no API key, or rate-limited."""
     if not GEMINI_API_KEY or not chunks:
         return None
 
-    answer = generate_answer(item["question"], chunks)
+    try:
+        time.sleep(RATE_LIMIT_DELAY_SECONDS)
+        answer = generate_answer(item["question"], chunks)
 
-    client = genai.Client(api_key=GEMINI_API_KEY)
-    context = "\n".join(c["text"] for c in chunks)
-    judge_prompt = JUDGE_PROMPT.format(question=item["question"], context=context, answer=answer)
-    response = client.models.generate_content(model=GEMINI_MODEL_NAME, contents=judge_prompt)
+        client = genai.Client(api_key=GEMINI_API_KEY)
+        context = "\n".join(c["text"] for c in chunks)
+        judge_prompt = JUDGE_PROMPT.format(question=item["question"], context=context, answer=answer)
+        time.sleep(RATE_LIMIT_DELAY_SECONDS)
+        response = client.models.generate_content(model=GEMINI_MODEL_NAME, contents=judge_prompt)
+    except genai_errors.ClientError as e:
+        print(f"  skipped {item['id']}: {e}")
+        return None
 
     scores: dict = {"answer": answer}
     for line in response.text.strip().splitlines():
@@ -92,7 +104,12 @@ def main() -> None:
         print("Generation checks skipped - set GEMINI_API_KEY in .env to enable them.")
         return
 
-    generation_results = [g for item, r in zip(testset, retrieval_results) if (g := score_generation(item, r["chunks"]))]
+    print(f"Judging {n} generated answers with Gemini (paced for free-tier rate limits, this takes a few minutes)...")
+    generation_results = []
+    for item, r in zip(testset, retrieval_results):
+        g = score_generation(item, r["chunks"])
+        if g:
+            generation_results.append(g)
     if generation_results:
         avg_faithfulness = sum(g.get("faithfulness", 0) for g in generation_results) / len(generation_results)
         avg_relevance = sum(g.get("relevance", 0) for g in generation_results) / len(generation_results)

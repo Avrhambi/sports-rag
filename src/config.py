@@ -14,7 +14,7 @@ FAISS_INDEX_PATH = DATA_DIR / "faiss.index"
 CHUNKS_PATH = DATA_DIR / "chunks.json"
 
 EMBEDDING_MODEL_NAME = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
-GEMINI_MODEL_NAME = "gemini-2.0-flash"
+GEMINI_MODEL_NAME = "gemini-2.5-flash"
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
 
 CHUNK_SIZE_WORDS = 400
