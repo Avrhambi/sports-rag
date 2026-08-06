@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>מגרש החוקים — כדורגל וכדורסל</title>
+<meta name="description" content="שאלו כל שאלה על חוקי כדורגל וכדורסל וקבלו תשובה מבוססת על החוקה הרשמית" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Heebo:wght@400;500;700;800&family=Space+Mono:wght@400;700&display=swap"
+  rel="stylesheet"
+/>
+<link rel="stylesheet" href="/styles.css" />
+</head>
+<body class="sport-all" data-sport="">
+  <div class="pitch-frame">
+
+    <header class="pitch-header">
+      <div class="brand">
+        <svg class="brand-mark" viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">
+          <circle cx="12" cy="12" r="9.3" />
+          <path d="M12 6.3l3.3 2.4-1.3 3.9H10l-1.3-3.9z" />
+          <path d="M12 6.3V2.6M15.3 8.7l3.5-1.2M14 12.6l2.7 2.9M10 12.6l-2.7 2.9M8.7 8.7L5.2 7.5" />
+        </svg>
+        <div class="brand-text">
+          <p class="brand-eyebrow">Sports Rules</p>
+          <h1 class="brand-title">מגרש החוקים</h1>
+        </div>
+      </div>
+
+      <nav class="sport-tabs" role="tablist" aria-label="בחירת ענף ספורט">
+        <button class="sport-tab" data-sport="" role="tab" aria-selected="true" type="button">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+            <rect x="2.5" y="4.5" width="19" height="15" rx="2" />
+            <line x1="12" y1="4.5" x2="12" y2="19.5" />
+          </svg>
+          הכל
+        </button>
+        <button class="sport-tab" data-sport="football" role="tab" aria-selected="false" type="button">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">
+            <circle cx="12" cy="12" r="9.3" />
+            <path d="M12 6.3l3.3 2.4-1.3 3.9H10l-1.3-3.9z" />
+          </svg>
+          כדורגל
+        </button>
+        <button class="sport-tab" data-sport="basketball" role="tab" aria-selected="false" type="button">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">
+            <circle cx="12" cy="12" r="9.3" />
+            <path d="M12 2.7v18.6M2.7 12h18.6M4.9 5.6a13 13 0 0 1 14.2 0M4.9 18.4a13 13 0 0 0 14.2 0" />
+          </svg>
+          כדורסל
+        </button>
+      </nav>
+    </header>
+
+    <div class="halfway-line" aria-hidden="true"></div>
+
+    <main class="pitch-main">
+      <p class="tagline">שאלו כל שאלה על חוקי כדורגל וכדורסל, ותקבלו תשובה מבוססת על החוקה הרשמית</p>
+
+      <form class="center-circle-form" id="ask-form" novalidate>
+        <div class="center-circle-ring" aria-hidden="true"></div>
+        <label class="sr-only" for="question">השאלה שלכם</label>
+        <textarea id="question" name="question" placeholder="מה תרצו לדעת?" rows="2" required></textarea>
+        <button type="submit" class="whistle-btn" aria-label="שריקת פתיחה — שלחו שאלה">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M2.5 11h3.2" />
+            <path d="M6 9.3h7a4.2 4.2 0 1 1 0 5.4H6z" />
+            <circle cx="14.7" cy="12" r="1.3" fill="currentColor" stroke="none" />
+            <path d="M17.6 9.4a3.7 3.7 0 0 1 0 5.2" />
+            <path d="M20 8.4a5.6 5.6 0 0 1 0 7.2" opacity=".55" />
+          </svg>
+        </button>
+      </form>
+
+      <div class="loading-strip" id="loading" hidden>
+        <span class="loading-ball" aria-hidden="true"></span>
+        <span class="loading-text">הכדור באוויר...</span>
+      </div>
+
+      <section class="ruling-box" id="answer-section" hidden aria-live="polite">
+        <h2 class="ruling-heading">הפסיקה הרשמית</h2>
+        <p class="ruling-text" id="answer-text"></p>
+      </section>
+
+      <section class="sources-board" id="sources-section" hidden>
+        <h2 class="sources-heading">מקורות מהחוקה</h2>
+        <div class="sub-tiles" id="sources-list"></div>
+      </section>
+
+      <p class="empty-state" id="empty-state" hidden>החוק הזה לא נמצא במגרש שלנו. נסו לנסח את השאלה אחרת.</p>
+      <p class="error-state" id="error-state" hidden>יש בעיה בקו — נסו שוב עוד רגע.</p>
+    </main>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>

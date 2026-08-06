@@ -1,0 +1,450 @@
+/* Sports Rules RAG — pitch/court field-lines theme.
+   The page is laid out as a top-down playing-surface diagram: a halfway
+   line divides header from content, and the question input doubles as
+   the actual center circle rather than sitting inside a generic card. */
+
+:root {
+  --chalk: #f5f1e4;
+  --ink: #13120f;
+  --amber: #e8a33d;
+  --whistle: #d8dcd6;
+
+  --font-display: "Oswald", "Arial Narrow", sans-serif;
+  --font-body: "Heebo", "Segoe UI", sans-serif;
+  --font-mono: "Space Mono", "Courier New", monospace;
+}
+
+body.sport-all,
+body.sport-football {
+  --surface: #16391f;
+  --surface-alt: #1f5c34;
+  --line: rgba(245, 241, 228, 0.55);
+}
+
+body.sport-basketball {
+  --surface: #7a4a22;
+  --surface-alt: #96592a;
+  --line: rgba(245, 241, 228, 0.5);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--chalk);
+  background-color: var(--surface);
+  background-image: repeating-linear-gradient(
+    115deg,
+    var(--surface) 0 80px,
+    var(--surface-alt) 80px 160px
+  );
+  transition: background-color 0.4s ease;
+  font-family: var(--font-body);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body {
+    transition: none;
+  }
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.pitch-frame {
+  margin: 12px;
+  min-height: calc(100vh - 24px);
+  border: 2px solid var(--line);
+  border-radius: 28px;
+  padding: clamp(18px, 4vw, 48px);
+  position: relative;
+  overflow: hidden;
+}
+
+/* ---------- header: brand + sport tabs ---------- */
+
+.pitch-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand-mark {
+  color: var(--amber);
+  flex-shrink: 0;
+}
+
+.brand-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.brand-eyebrow {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--line);
+  direction: ltr;
+  text-align: right;
+}
+
+.brand-title {
+  margin: 0;
+  font-family: var(--font-body);
+  font-weight: 800;
+  font-size: clamp(1.5rem, 3vw, 2.1rem);
+  color: var(--chalk);
+}
+
+.sport-tabs {
+  display: flex;
+  gap: clamp(14px, 3vw, 26px);
+  flex-wrap: wrap;
+}
+
+.sport-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  color: var(--chalk);
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  font-weight: 500;
+  padding: 6px 2px 8px;
+  opacity: 0.72;
+  cursor: pointer;
+}
+
+.sport-tab:hover {
+  opacity: 1;
+}
+
+.sport-tab:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 4px;
+}
+
+.sport-tab[aria-selected="true"] {
+  opacity: 1;
+  font-weight: 700;
+  border-bottom-color: var(--amber);
+}
+
+/* ---------- halfway line ---------- */
+
+.halfway-line {
+  border-top: 2px dashed var(--line);
+  margin: clamp(20px, 4vw, 36px) 0 8px;
+  position: relative;
+}
+
+/* ---------- hero: center-circle question form ---------- */
+
+.pitch-main {
+  max-width: 720px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.tagline {
+  max-width: 46ch;
+  margin: 0 auto;
+  font-size: 0.98rem;
+  line-height: 1.6;
+  color: var(--line);
+}
+
+.center-circle-form {
+  position: relative;
+  max-width: 480px;
+  margin: 56px auto 44px;
+}
+
+.center-circle-ring {
+  position: absolute;
+  inset: -30px;
+  border: 1.5px solid var(--line);
+  border-radius: 999px;
+  pointer-events: none;
+}
+
+#question {
+  width: 100%;
+  min-height: 68px;
+  padding: 18px 30px;
+  border: none;
+  border-radius: 999px;
+  background: var(--chalk);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 1.05rem;
+  font-weight: 500;
+  line-height: 1.4;
+  text-align: center;
+  resize: none;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+
+#question::placeholder {
+  color: #6b6a63;
+}
+
+#question:focus-visible {
+  outline: 3px solid var(--amber);
+  outline-offset: 3px;
+}
+
+.whistle-btn {
+  position: absolute;
+  bottom: -26px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: var(--whistle);
+  color: var(--ink);
+  border: 3px solid var(--ink);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.whistle-btn:hover {
+  transform: translateX(-50%) scale(1.06);
+  background: var(--amber);
+}
+
+.whistle-btn:active {
+  transform: translateX(-50%) scale(0.95);
+}
+
+.whistle-btn:focus-visible {
+  outline: 3px solid var(--amber);
+  outline-offset: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .whistle-btn {
+    transition: none;
+  }
+}
+
+/* ---------- loading state: ball rolling along a dashed pass ---------- */
+
+.loading-strip {
+  position: relative;
+  height: 2px;
+  max-width: 280px;
+  margin: 44px auto 56px;
+  background-image: repeating-linear-gradient(
+    90deg,
+    var(--line) 0 10px,
+    transparent 10px 22px
+  );
+}
+
+.loading-ball {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  width: 12px;
+  height: 12px;
+  margin-top: -6px;
+  border-radius: 50%;
+  background: var(--amber);
+  animation: roll 1.3s linear infinite;
+}
+
+.loading-text {
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-size: 0.85rem;
+  color: var(--line);
+}
+
+@keyframes roll {
+  from {
+    right: 0;
+  }
+  to {
+    right: calc(100% - 12px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loading-ball {
+    animation: none;
+    right: calc(50% - 6px);
+  }
+}
+
+/* ---------- answer: penalty-box style ruling ---------- */
+
+.ruling-box {
+  position: relative;
+  max-width: 640px;
+  margin: 8px auto 32px;
+  padding: 26px 30px;
+  text-align: right;
+  background: var(--chalk);
+  color: var(--ink);
+  border: 2px solid var(--ink);
+  border-radius: 6px 32px 6px 6px;
+}
+
+.ruling-heading {
+  margin: 0 0 12px;
+  font-family: var(--font-body);
+  font-weight: 800;
+  font-size: 1rem;
+  color: var(--surface);
+}
+
+.ruling-text {
+  margin: 0;
+  font-size: 1.08rem;
+  line-height: 1.75;
+  white-space: pre-line;
+}
+
+/* ---------- sources: substitution-board tiles ---------- */
+
+.sources-board {
+  max-width: 640px;
+  margin: 0 auto 40px;
+  text-align: right;
+}
+
+.sources-heading {
+  margin: 0 0 14px;
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--line);
+}
+
+.sub-tiles {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sub-tile {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--ink);
+  color: var(--chalk);
+  border: none;
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: right;
+}
+
+.sub-tile:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 3px;
+}
+
+.sub-tile .tile-number {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: var(--amber);
+  flex-shrink: 0;
+}
+
+.sub-tile .tile-sport {
+  margin-inline-start: auto;
+  font-size: 0.78rem;
+  color: var(--line);
+}
+
+.sub-tile-panel {
+  direction: ltr;
+  text-align: left;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  line-height: 1.65;
+  background: var(--chalk);
+  color: var(--ink);
+  border-radius: 8px;
+  padding: 16px 18px;
+  margin-top: -2px;
+}
+
+.sub-tile-panel a {
+  color: var(--surface);
+}
+
+/* ---------- empty / error states ---------- */
+
+.empty-state,
+.error-state {
+  max-width: 46ch;
+  margin: 24px auto;
+  font-size: 0.95rem;
+  color: var(--line);
+}
+
+.error-state {
+  color: #f0b3a3;
+}
+
+/* ---------- responsive ---------- */
+
+@media (max-width: 560px) {
+  .pitch-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .center-circle-ring {
+    inset: -22px;
+  }
+
+  .ruling-box,
+  .sources-board {
+    text-align: right;
+  }
+}
