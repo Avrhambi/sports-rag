@@ -1,0 +1,98 @@
+[
+  {
+    "id": "football-1",
+    "question": "מהו כלל הנבדל בכדורגל?",
+    "expected_sport": "football",
+    "expected_keywords": ["offside"]
+  },
+  {
+    "id": "football-2",
+    "question": "מה קורה כאשר שחקן מקבל כרטיס צהוב?",
+    "expected_sport": "football",
+    "expected_keywords": ["yellow card"]
+  },
+  {
+    "id": "football-3",
+    "question": "מתי מוענקת בעיטת עונשין?",
+    "expected_sport": "football",
+    "expected_keywords": ["penalty kick"]
+  },
+  {
+    "id": "football-4",
+    "question": "כמה שחקנים יש בכל קבוצת כדורגל?",
+    "expected_sport": "football",
+    "expected_keywords": ["number of players"]
+  },
+  {
+    "id": "football-5",
+    "question": "כיצד מבצעים זריקת קו (תרומה) בכדורגל?",
+    "expected_sport": "football",
+    "expected_keywords": ["throw-in"]
+  },
+  {
+    "id": "football-6",
+    "question": "מה קורה בעקבות עבירה חמורה שגוררת כרטיס אדום?",
+    "expected_sport": "football",
+    "expected_keywords": ["red card"]
+  },
+  {
+    "id": "football-7",
+    "question": "מתי מבוצעת בעיטת שער?",
+    "expected_sport": "football",
+    "expected_keywords": ["goal kick"]
+  },
+  {
+    "id": "football-8",
+    "question": "מה תפקידו של השופט הראשי במשחק כדורגל?",
+    "expected_sport": "football",
+    "expected_keywords": ["referee"]
+  },
+  {
+    "id": "basketball-1",
+    "question": "כמה שחקנים מייצגים כל קבוצה על המגרש בכדורסל?",
+    "expected_sport": "basketball",
+    "expected_keywords": ["five players"]
+  },
+  {
+    "id": "basketball-2",
+    "question": "מהו שעון הקליעה בכדורסל?",
+    "expected_sport": "basketball",
+    "expected_keywords": ["shot clock"]
+  },
+  {
+    "id": "basketball-3",
+    "question": "מתי מוענקת זריקת עונשין (קו זריקות עונשין) בכדורסל?",
+    "expected_sport": "basketball",
+    "expected_keywords": ["free throw"]
+  },
+  {
+    "id": "basketball-4",
+    "question": "מה נחשב לעבירה אישית בכדורסל?",
+    "expected_sport": "basketball",
+    "expected_keywords": ["foul"]
+  },
+  {
+    "id": "basketball-5",
+    "question": "כמה נקודות שווה סל משלוש נקודות?",
+    "expected_sport": "basketball",
+    "expected_keywords": ["three-point"]
+  },
+  {
+    "id": "basketball-6",
+    "question": "מהם כללי הכדרור (דריבל) בכדורסל?",
+    "expected_sport": "basketball",
+    "expected_keywords": ["dribbl"]
+  },
+  {
+    "id": "basketball-7",
+    "question": "מה קורה כאשר קבוצה צוברת עבירות רבות מדי במחצית?",
+    "expected_sport": "basketball",
+    "expected_keywords": ["foul"]
+  },
+  {
+    "id": "basketball-8",
+    "question": "מהי מטרת שעון הקליעה בכדורסל?",
+    "expected_sport": "basketball",
+    "expected_keywords": ["shot clock"]
+  }
+]

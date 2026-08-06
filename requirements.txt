@@ -10,5 +10,3 @@ pydantic
 # dev / eval
 ruff
 pytest
-ragas
-datasets
