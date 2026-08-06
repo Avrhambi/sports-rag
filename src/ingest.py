@@ -3,11 +3,23 @@
 Run as: python -m src.ingest
 """
 
+import json
 import re
 
+import faiss
+import numpy as np
 import requests
+from sentence_transformers import SentenceTransformer
 
-from src.config import CHUNK_OVERLAP_WORDS, CHUNK_SIZE_WORDS, RAW_DIR, WIKIPEDIA_SOURCES
+from src.config import (
+    CHUNK_OVERLAP_WORDS,
+    CHUNK_SIZE_WORDS,
+    CHUNKS_PATH,
+    EMBEDDING_MODEL_NAME,
+    FAISS_INDEX_PATH,
+    RAW_DIR,
+    WIKIPEDIA_SOURCES,
+)
 
 WIKIPEDIA_API_URL = "https://en.wikipedia.org/w/api.php"
 # Wikipedia's API rejects requests with no descriptive User-Agent (403).
@@ -87,6 +99,22 @@ def build_chunks() -> list[dict]:
     return all_chunks
 
 
+def build_index(chunks: list[dict]) -> None:
+    """Embed chunk texts and persist a cosine-similarity FAISS index alongside their metadata."""
+    model = SentenceTransformer(EMBEDDING_MODEL_NAME)
+    embeddings = model.encode([c["text"] for c in chunks], normalize_embeddings=True)
+    embeddings = np.asarray(embeddings, dtype="float32")
+
+    index = faiss.IndexFlatIP(embeddings.shape[1])
+    index.add(embeddings)
+
+    FAISS_INDEX_PATH.parent.mkdir(parents=True, exist_ok=True)
+    faiss.write_index(index, str(FAISS_INDEX_PATH))
+    CHUNKS_PATH.write_text(json.dumps(chunks, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
 if __name__ == "__main__":
     fetched_chunks = build_chunks()
     print(f"Fetched and chunked {len(fetched_chunks)} chunks from {len(WIKIPEDIA_SOURCES)} sources.")
+    build_index(fetched_chunks)
+    print(f"Built FAISS index at {FAISS_INDEX_PATH} ({len(fetched_chunks)} vectors).")
