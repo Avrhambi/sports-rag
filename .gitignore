@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+
+# Generated ingestion artifacts (rerunnable via `python -m src.ingest`)
+data/raw/*
+data/faiss.index
+data/chunks.json
+!data/raw/.gitkeep
+
+.pytest_cache/
+.ruff_cache/
