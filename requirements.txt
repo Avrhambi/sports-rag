@@ -2,7 +2,7 @@ fastapi
 uvicorn[standard]
 sentence-transformers
 faiss-cpu
-google-generativeai
+google-genai
 python-dotenv
 requests
 pydantic
