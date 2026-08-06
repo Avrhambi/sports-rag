@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python -c \"import sys,json,subprocess\nd=json.load(sys.stdin)\nf=d.get('tool_input',{}).get('file_path','')\nif f.endswith('.py'):\n    subprocess.run(['python','-m','ruff','check',f])\n\" 2>/dev/null || true",
+            "statusMessage": "Running ruff check"
+          }
+        ]
+      }
+    ]
+  }
+}
