@@ -29,24 +29,26 @@
     </svg>
 
     <!-- basketball court markings, drawn to real NBA proportions at a uniform 5.3 units/ft scale
-         (16ft key over 19ft, 12ft free-throw circle, 4ft restricted arc, 23.75ft/22ft three-point line)
-         so circles stay circles and the halfway line lives on the query box itself -->
+         (16ft key over 19ft, 12ft free-throw circle, 4ft restricted arc), except the two-point
+         boundary: instead of an NBA-style corner-3 (straight sideline run then arc), it's one
+         continuous semicircle from baseline corner to baseline corner (old-school half-disk court,
+         no corner threes) -- so circles stay circles and the halfway line lives on the query box itself -->
     <svg class="court-lines lines-basketball" viewBox="0 0 300 500" aria-hidden="true" focusable="false">
-      <path d="M-15 2 A165 165 0 0 0 315 2 Z" fill="var(--two-point-fill)" stroke="none" />
+      <path d="M0 2 A150 150 0 0 0 300 2 Z" fill="var(--two-point-fill)" stroke="none" />
       <path d="M98 2 V102.7 H202 V2 Z" fill="var(--key-fill)" stroke="none" />
       <path d="M112 102.7 A38 38 0 0 1 188 102.7 Z" fill="var(--two-point-fill)" stroke="none" />
       <path d="M112 102.7 A38 38 0 0 0 188 102.7 Z" fill="var(--key-fill)" stroke="none" />
-      <path d="M-15 498 A165 165 0 0 1 315 498 Z" fill="var(--two-point-fill)" stroke="none" />
+      <path d="M0 498 A150 150 0 0 1 300 498 Z" fill="var(--two-point-fill)" stroke="none" />
       <path d="M98 498 V397.3 H202 V498 Z" fill="var(--key-fill)" stroke="none" />
       <path d="M112 397.3 A38 38 0 0 0 188 397.3 Z" fill="var(--two-point-fill)" stroke="none" />
       <path d="M112 397.3 A38 38 0 0 1 188 397.3 Z" fill="var(--key-fill)" stroke="none" />
       <g fill="none" stroke="currentColor" stroke-width="2">
         <path d="M98 2 V102.7 H202 V2" />
         <circle cx="150" cy="102.7" r="38" />
-        <path d="M-15 2 A165 165 0 0 0 315 2" />
+        <path d="M0 2 A150 150 0 0 0 300 2" />
         <path d="M98 498 V397.3 H202 V498" />
         <circle cx="150" cy="397.3" r="38" />
-        <path d="M-15 498 A165 165 0 0 1 315 498" />
+        <path d="M0 498 A150 150 0 0 1 300 498" />
       </g>
     </svg>
 

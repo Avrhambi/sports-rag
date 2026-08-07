@@ -122,7 +122,11 @@ body.sport-basketball .lines-basketball {
 }
 
 .lines-basketball {
-  opacity: 1;
+  /* football's court-lines are thin unfilled strokes, so full opacity never
+     hurts text contrast; basketball's key/arc use solid color fills, so
+     they stay muted enough that white/cream text remains readable wherever
+     content happens to sit over them. */
+  opacity: 0.28;
 }
 
 /* ---------- header: brand + sport tabs ---------- */

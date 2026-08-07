@@ -30,6 +30,9 @@
       tab.setAttribute("aria-selected", String(tab.dataset.sport === sport));
     });
     taglineEl.textContent = TAGLINES[sport] ?? TAGLINES[""];
+    // A previous answer/sources are for the old sport context -- leaving them
+    // visible after switching tabs reads as a stale or wrong result.
+    hideResults();
   }
 
   tabs.forEach((tab) => {
