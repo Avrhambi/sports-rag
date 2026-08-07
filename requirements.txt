@@ -6,6 +6,7 @@ google-genai
 python-dotenv
 requests
 pydantic
+nba_api
 
 # dev / eval
 ruff
