@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>מגרש החוקים — כדורגל וכדורסל</title>
-<meta name="description" content="שאלו כל שאלה על חוקי כדורגל וכדורסל וקבלו תשובה מבוססת על החוקה הרשמית" />
+<title>מגרש הגמרים — כדורגל וכדורסל</title>
+<meta name="description" content="שאלו כל שאלה על גמרי ליגת האלופות וגמרי ה-NBA וקבלו תשובה מבוססת על נתוני הגמרים ההיסטוריים" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link
@@ -15,6 +15,40 @@
 </head>
 <body class="sport-all" data-sport="">
   <div class="pitch-frame">
+    <!-- football pitch markings: goalkeeper area (penalty box + goal box + arc) at each end
+         (the halfway line lives on the query box itself) -->
+    <svg class="court-lines lines-football" viewBox="0 0 300 500" aria-hidden="true" focusable="false">
+      <g fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M25 2 V82 H275 V2" />
+        <rect x="100" y="2" width="100" height="30" />
+        <path d="M94 82 A60 60 0 0 0 206 82" />
+        <path d="M25 498 V418 H275 V498" />
+        <rect x="100" y="468" width="100" height="30" />
+        <path d="M94 418 A60 60 0 0 1 206 418" />
+      </g>
+    </svg>
+
+    <!-- basketball court markings, drawn to real NBA proportions at a uniform 5.3 units/ft scale
+         (16ft key over 19ft, 12ft free-throw circle, 4ft restricted arc, 23.75ft/22ft three-point line)
+         so circles stay circles and the halfway line lives on the query box itself -->
+    <svg class="court-lines lines-basketball" viewBox="0 0 300 500" aria-hidden="true" focusable="false">
+      <path d="M-15 2 A165 165 0 0 0 315 2 Z" fill="var(--two-point-fill)" stroke="none" />
+      <path d="M98 2 V102.7 H202 V2 Z" fill="var(--key-fill)" stroke="none" />
+      <path d="M112 102.7 A38 38 0 0 1 188 102.7 Z" fill="var(--two-point-fill)" stroke="none" />
+      <path d="M112 102.7 A38 38 0 0 0 188 102.7 Z" fill="var(--key-fill)" stroke="none" />
+      <path d="M-15 498 A165 165 0 0 1 315 498 Z" fill="var(--two-point-fill)" stroke="none" />
+      <path d="M98 498 V397.3 H202 V498 Z" fill="var(--key-fill)" stroke="none" />
+      <path d="M112 397.3 A38 38 0 0 0 188 397.3 Z" fill="var(--two-point-fill)" stroke="none" />
+      <path d="M112 397.3 A38 38 0 0 1 188 397.3 Z" fill="var(--key-fill)" stroke="none" />
+      <g fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M98 2 V102.7 H202 V2" />
+        <circle cx="150" cy="102.7" r="38" />
+        <path d="M-15 2 A165 165 0 0 0 315 2" />
+        <path d="M98 498 V397.3 H202 V498" />
+        <circle cx="150" cy="397.3" r="38" />
+        <path d="M-15 498 A165 165 0 0 1 315 498" />
+      </g>
+    </svg>
 
     <header class="pitch-header">
       <div class="brand">
@@ -24,8 +58,8 @@
           <path d="M12 6.3V2.6M15.3 8.7l3.5-1.2M14 12.6l2.7 2.9M10 12.6l-2.7 2.9M8.7 8.7L5.2 7.5" />
         </svg>
         <div class="brand-text">
-          <p class="brand-eyebrow">Sports Rules</p>
-          <h1 class="brand-title">מגרש החוקים</h1>
+          <p class="brand-eyebrow">Finals History</p>
+          <h1 class="brand-title">מגרש הגמרים</h1>
         </div>
       </div>
 
@@ -57,9 +91,10 @@
     <div class="halfway-line" aria-hidden="true"></div>
 
     <main class="pitch-main">
-      <p class="tagline">שאלו כל שאלה על חוקי כדורגל וכדורסל, ותקבלו תשובה מבוססת על החוקה הרשמית</p>
+      <p class="tagline">שאלו כל שאלה על גמרי ליגת האלופות וגמרי ה-NBA, וקבלו תשובה מבוססת על נתוני הגמרים ההיסטוריים</p>
 
       <form class="center-circle-form" id="ask-form" novalidate>
+        <div class="pitch-centerline" aria-hidden="true"></div>
         <div class="center-circle-ring" aria-hidden="true"></div>
         <label class="sr-only" for="question">השאלה שלכם</label>
         <textarea id="question" name="question" placeholder="מה תרצו לדעת?" rows="2" required></textarea>
@@ -80,16 +115,16 @@
       </div>
 
       <section class="ruling-box" id="answer-section" hidden aria-live="polite">
-        <h2 class="ruling-heading">הפסיקה הרשמית</h2>
+        <h2 class="ruling-heading">התוצאה הרשמית</h2>
         <p class="ruling-text" id="answer-text"></p>
       </section>
 
       <section class="sources-board" id="sources-section" hidden>
-        <h2 class="sources-heading">מקורות מהחוקה</h2>
+        <h2 class="sources-heading">מקורות מהגמר</h2>
         <div class="sub-tiles" id="sources-list"></div>
       </section>
 
-      <p class="empty-state" id="empty-state" hidden>החוק הזה לא נמצא במגרש שלנו. נסו לנסח את השאלה אחרת.</p>
+      <p class="empty-state" id="empty-state" hidden>הפרט הזה לא נמצא במאגר הגמרים שלנו. נסו לנסח את השאלה אחרת.</p>
       <p class="error-state" id="error-state" hidden>יש בעיה בקו — נסו שוב עוד רגע.</p>
     </main>
   </div>

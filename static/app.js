@@ -3,6 +3,7 @@
   const form = document.getElementById("ask-form");
   const questionInput = document.getElementById("question");
   const tabs = Array.from(document.querySelectorAll(".sport-tab"));
+  const taglineEl = document.querySelector(".tagline");
 
   const loading = document.getElementById("loading");
   const answerSection = document.getElementById("answer-section");
@@ -14,6 +15,12 @@
 
   const SPORT_LABELS = { football: "כדורגל", basketball: "כדורסל" };
 
+  const TAGLINES = {
+    "": "שאלו כל שאלה על גמרי ליגת האלופות וגמרי ה-NBA, וקבלו תשובה מבוססת על נתוני הגמרים ההיסטוריים",
+    football: "שאלו כל שאלה על גמרי ליגת האלופות, וקבלו תשובה מבוססת על נתוני הגמרים ההיסטוריים",
+    basketball: "שאלו כל שאלה על גמרי ה-NBA, וקבלו תשובה מבוססת על נתוני הגמרים ההיסטוריים",
+  };
+
   let currentSport = "";
 
   function setSport(sport) {
@@ -22,6 +29,7 @@
     tabs.forEach((tab) => {
       tab.setAttribute("aria-selected", String(tab.dataset.sport === sport));
     });
+    taglineEl.textContent = TAGLINES[sport] ?? TAGLINES[""];
   }
 
   tabs.forEach((tab) => {
