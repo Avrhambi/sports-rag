@@ -12,6 +12,8 @@ class SourceOut(BaseModel):
     source_title: str
     url: str
     sport: str
+    competition: str
+    season: str
     text: str
 
 

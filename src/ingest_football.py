@@ -202,7 +202,7 @@ def parse_final(wikitext: str) -> dict:
 
 
 def render_markdown(year: int, match: dict) -> str:
-    lines = [f"# {year} UEFA Champions League Final", ""]
+    lines = [f"# {year} UEFA Champions League Final (Football / Soccer)", ""]
     lines += ["## Match Info"]
     lines += [
         f"- Competition: UEFA Champions League{f' ({match['season']})' if match['season'] else ''}",

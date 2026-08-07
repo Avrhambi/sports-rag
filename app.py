@@ -8,7 +8,7 @@ from src.generate import generate_answer
 from src.models import AskRequest, AskResponse, SourceOut
 from src.retrieve import retrieve
 
-app = FastAPI(title="Sports Rules RAG")
+app = FastAPI(title="Sports Finals History RAG")
 
 
 @app.get("/api/health")
@@ -26,11 +26,18 @@ def ask(request: AskRequest) -> AskResponse:
 
     chunks = retrieve(question, sport=request.sport)
     if not chunks:
-        raise HTTPException(status_code=404, detail="No relevant rules found for this question.")
+        raise HTTPException(status_code=404, detail="No relevant match data found for this question.")
 
     answer = generate_answer(question, chunks)
     sources = [
-        SourceOut(source_title=c["source_title"], url=c["url"], sport=c["sport"], text=c["text"])
+        SourceOut(
+            source_title=c["source_title"],
+            url=c["url"],
+            sport=c["sport"],
+            competition=c["competition"],
+            season=c["season"],
+            text=c["text"],
+        )
         for c in chunks
     ]
     return AskResponse(answer=answer, sources=sources)

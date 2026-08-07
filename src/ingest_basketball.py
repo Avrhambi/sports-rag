@@ -74,7 +74,12 @@ def render_markdown(year: int, infobox: dict, box: dict) -> str:
     arena = summary["arena"]
     officials = ", ".join(o["name"] for o in summary["officials"])
 
-    lines = [f"# {year} NBA Finals", ""]
+    def quarter_line(team: dict) -> str:
+        periods = {p["period"]: p["score"] for p in team["periods"]}
+        q_scores = "-".join(str(periods.get(q, "-")) for q in (1, 2, 3, 4))
+        return f"{team['teamCity']} {team['teamName']} scored {q_scores} by quarter, final {team['score']}"
+
+    lines = [f"# {year} NBA Finals (Basketball)", ""]
     lines += ["## Match Info"]
     lines += [
         f"- Competition: NBA Finals ({infobox.get('year', year)})",
@@ -84,6 +89,7 @@ def render_markdown(year: int, infobox: dict, box: dict) -> str:
         f"- Officials: {officials}",
         f"- Deciding game result: {away['teamCity']} {away['teamName']} {away['score']} – "
         f"{home['teamCity']} {home['teamName']} {home['score']}",
+        f"- Quarter-by-quarter score: {quarter_line(away)}; {quarter_line(home)}",
         f"- Series result: {infobox.get('champion', '')} won {infobox.get('champion_games', '')}–"
         f"{infobox.get('runnerup_games', '')} over {infobox.get('runnerup', '')}",
         f"- Champion head coach: {infobox.get('champion_coach', '')}",
@@ -91,14 +97,6 @@ def render_markdown(year: int, infobox: dict, box: dict) -> str:
         f"- Finals MVP: {infobox.get('MVP', '')}",
         "",
     ]
-
-    lines += ["## Quarter-by-Quarter Score"]
-    lines += ["| Team | Q1 | Q2 | Q3 | Q4 | Final |", "|---|---|---|---|---|---|"]
-    for team in (away, home):
-        periods = {p["period"]: p["score"] for p in team["periods"]}
-        q_scores = " | ".join(str(periods.get(q, "-")) for q in (1, 2, 3, 4))
-        lines.append(f"| {team['teamCity']} {team['teamName']} | {q_scores} | {team['score']} |")
-    lines.append("")
 
     lines += ["## Box Score"]
     players = box["players"]
