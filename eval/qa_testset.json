@@ -1,98 +1,62 @@
 [
   {
     "id": "football-1",
-    "question": "מהו כלל הנבדל בכדורגל?",
+    "question": "מי ניצח בגמר ליגת האלופות 2022?",
     "expected_sport": "football",
-    "expected_keywords": ["offside"]
+    "expected_keywords": ["Real Madrid"]
   },
   {
     "id": "football-2",
-    "question": "מה קורה כאשר שחקן מקבל כרטיס צהוב?",
+    "question": "היכן נערך גמר ליגת האלופות 2023?",
     "expected_sport": "football",
-    "expected_keywords": ["yellow card"]
+    "expected_keywords": ["Atatürk"]
   },
   {
     "id": "football-3",
-    "question": "מתי מוענקת בעיטת עונשין?",
+    "question": "מי היה השופט בגמר ליגת האלופות 2024?",
     "expected_sport": "football",
-    "expected_keywords": ["penalty kick"]
+    "expected_keywords": ["Vinčić"]
   },
   {
     "id": "football-4",
-    "question": "כמה שחקנים יש בכל קבוצת כדורגל?",
+    "question": "מה הייתה התוצאה הסופית בגמר ליגת האלופות 2025?",
     "expected_sport": "football",
-    "expected_keywords": ["number of players"]
+    "expected_keywords": ["Paris Saint-Germain", "Inter Milan"]
   },
   {
     "id": "football-5",
-    "question": "כיצד מבצעים זריקת קו (תרומה) בכדורגל?",
+    "question": "מי ניצח בעונשין בגמר ליגת האלופות 2026?",
     "expected_sport": "football",
-    "expected_keywords": ["throw-in"]
-  },
-  {
-    "id": "football-6",
-    "question": "מה קורה בעקבות עבירה חמורה שגוררת כרטיס אדום?",
-    "expected_sport": "football",
-    "expected_keywords": ["red card"]
-  },
-  {
-    "id": "football-7",
-    "question": "מתי מבוצעת בעיטת שער?",
-    "expected_sport": "football",
-    "expected_keywords": ["goal kick"]
-  },
-  {
-    "id": "football-8",
-    "question": "מה תפקידו של השופט הראשי במשחק כדורגל?",
-    "expected_sport": "football",
-    "expected_keywords": ["referee"]
+    "expected_keywords": ["Penalty shootout"]
   },
   {
     "id": "basketball-1",
-    "question": "כמה שחקנים מייצגים כל קבוצה על המגרש בכדורסל?",
+    "question": "איזו קבוצה ניצחה באליפות ה-NBA ב-2022?",
     "expected_sport": "basketball",
-    "expected_keywords": ["five players"]
+    "expected_keywords": ["Golden State Warriors"]
   },
   {
     "id": "basketball-2",
-    "question": "מהו שעון הקליעה בכדורסל?",
+    "question": "מי נבחר לשחקן ה-MVP בגמר ה-NBA 2023?",
     "expected_sport": "basketball",
-    "expected_keywords": ["shot clock"]
+    "expected_keywords": ["Jokić"]
   },
   {
     "id": "basketball-3",
-    "question": "מתי מוענקת זריקת עונשין (קו זריקות עונשין) בכדורסל?",
+    "question": "מי היה המאמן הראשי של הקבוצה המנצחת בגמר ה-NBA 2024?",
     "expected_sport": "basketball",
-    "expected_keywords": ["free throw"]
+    "expected_keywords": ["Joe Mazzulla"]
   },
   {
     "id": "basketball-4",
-    "question": "מה נחשב לעבירה אישית בכדורסל?",
+    "question": "מה הייתה תוצאת הסדרה בגמר ה-NBA 2025?",
     "expected_sport": "basketball",
-    "expected_keywords": ["foul"]
+    "expected_keywords": ["Oklahoma City Thunder"]
   },
   {
     "id": "basketball-5",
-    "question": "כמה נקודות שווה סל משלוש נקודות?",
+    "question": "היכן נערך גמר ה-NBA 2026?",
     "expected_sport": "basketball",
-    "expected_keywords": ["three-point"]
-  },
-  {
-    "id": "basketball-6",
-    "question": "מהם כללי הכדרור (דריבל) בכדורסל?",
-    "expected_sport": "basketball",
-    "expected_keywords": ["dribbl"]
-  },
-  {
-    "id": "basketball-7",
-    "question": "מה קורה כאשר קבוצה צוברת עבירות רבות מדי במחצית?",
-    "expected_sport": "basketball",
-    "expected_keywords": ["foul"]
-  },
-  {
-    "id": "basketball-8",
-    "question": "מהי מטרת שעון הקליעה בכדורסל?",
-    "expected_sport": "basketball",
-    "expected_keywords": ["shot clock"]
+    "expected_keywords": ["San Antonio"]
   }
 ]
