@@ -1,0 +1,155 @@
+"""Fetch NBA Finals data and render each series' clinching game as a
+structured Markdown match report.
+
+nba_api (stats.nba.com) supplies the box-score facts: arena, officials,
+attendance, quarter-by-quarter score, and full per-player stats. It does not
+expose head coaches or Finals MVP, so those two fields are pulled from the
+small, stable "{{Infobox basketball final}}" on each "<year> NBA Finals"
+Wikipedia page via the shared wikitext helpers.
+"""
+
+import re
+import warnings
+
+from nba_api.stats.endpoints import boxscoresummaryv3, boxscoretraditionalv2, leaguegamefinder
+from nba_api.stats.static import teams as static_teams
+
+from src.config import NBA_FINALS_YEARS
+from src.wikitext import clean_wikitext, fetch_wikitext
+
+# nba_api's pandas usage triggers noisy FutureWarnings unrelated to correctness.
+warnings.filterwarnings("ignore")
+
+TEAMS_BY_FULL_NAME = {t["full_name"]: t for t in static_teams.get_teams()}
+
+
+def parse_finals_infobox(year: int) -> dict:
+    """Pull champion/runner-up, coaches, series result and MVP from Wikipedia."""
+    wikitext = fetch_wikitext(f"{year} NBA Finals")
+    match = re.search(r"\{\{Infobox basketball final(.*?)\n\}\}", wikitext, re.S)
+    if not match:
+        raise ValueError("Infobox basketball final not found")
+    fields: dict[str, str] = {}
+    current_key = None
+    for line in match.group(1).splitlines():
+        field_match = re.match(r"\|\s*([\w ]+?)\s*=(.*)$", line)
+        if field_match:
+            current_key = field_match.group(1)
+            fields[current_key] = field_match.group(2)
+        elif current_key is not None:
+            fields[current_key] += "\n" + line
+    return {k: clean_wikitext(v) for k, v in fields.items()}
+
+
+def resolve_team(full_name: str) -> dict:
+    if full_name not in TEAMS_BY_FULL_NAME:
+        raise ValueError(f"Unknown NBA team name from Wikipedia: {full_name!r}")
+    return TEAMS_BY_FULL_NAME[full_name]
+
+
+def find_clinching_game_id(season: str, team1_abbr: str, team2_abbr: str) -> str:
+    """The last-played game between the two Finals teams in that season's
+    playoffs is the series-clinching game."""
+    finder = leaguegamefinder.LeagueGameFinder(
+        season_nullable=season, season_type_nullable="Playoffs", timeout=30
+    )
+    df = finder.get_data_frames()[0]
+    matchups = df[
+        (df["TEAM_ABBREVIATION"] == team1_abbr) & (df["MATCHUP"].str.contains(team2_abbr))
+    ].sort_values("GAME_DATE")
+    if matchups.empty:
+        raise ValueError(f"No {team1_abbr} vs {team2_abbr} playoff games found for season {season}")
+    return matchups.iloc[-1]["GAME_ID"]
+
+
+def fetch_box_score(game_id: str) -> dict:
+    summary = boxscoresummaryv3.BoxScoreSummaryV3(game_id=game_id, timeout=30).get_dict()["boxScoreSummary"]
+    traditional = boxscoretraditionalv2.BoxScoreTraditionalV2(game_id=game_id, timeout=30).get_data_frames()[0]
+    return {"summary": summary, "players": traditional}
+
+
+def render_markdown(year: int, infobox: dict, box: dict) -> str:
+    summary = box["summary"]
+    home, away = summary["homeTeam"], summary["awayTeam"]
+    arena = summary["arena"]
+    officials = ", ".join(o["name"] for o in summary["officials"])
+
+    lines = [f"# {year} NBA Finals", ""]
+    lines += ["## Match Info"]
+    lines += [
+        f"- Competition: NBA Finals ({infobox.get('year', year)})",
+        f"- Series dates: {infobox.get('date', '')}",
+        f"- Venue: {arena['arenaName']}, {arena['arenaCity']}, {arena['arenaState']}",
+        f"- Attendance: {summary['attendance']}",
+        f"- Officials: {officials}",
+        f"- Deciding game result: {away['teamCity']} {away['teamName']} {away['score']} – "
+        f"{home['teamCity']} {home['teamName']} {home['score']}",
+        f"- Series result: {infobox.get('champion', '')} won {infobox.get('champion_games', '')}–"
+        f"{infobox.get('runnerup_games', '')} over {infobox.get('runnerup', '')}",
+        f"- Champion head coach: {infobox.get('champion_coach', '')}",
+        f"- Runner-up head coach: {infobox.get('runnerup_coach', '')}",
+        f"- Finals MVP: {infobox.get('MVP', '')}",
+        "",
+    ]
+
+    lines += ["## Quarter-by-Quarter Score"]
+    lines += ["| Team | Q1 | Q2 | Q3 | Q4 | Final |", "|---|---|---|---|---|---|"]
+    for team in (away, home):
+        periods = {p["period"]: p["score"] for p in team["periods"]}
+        q_scores = " | ".join(str(periods.get(q, "-")) for q in (1, 2, 3, 4))
+        lines.append(f"| {team['teamCity']} {team['teamName']} | {q_scores} | {team['score']} |")
+    lines.append("")
+
+    lines += ["## Box Score"]
+    players = box["players"]
+    for team_id, team in ((away["teamId"], away), (home["teamId"], home)):
+        lines.append(f"### {team['teamCity']} {team['teamName']}")
+        team_players = players[players["TEAM_ID"] == team_id]
+        for _, p in team_players.iterrows():
+            if not p["MIN"] or p["MIN"] != p["MIN"]:  # skip DNPs (empty or NaN minutes)
+                continue
+            starter = "Starter" if p["START_POSITION"] else "Bench"
+            lines.append(
+                f"- {p['PLAYER_NAME']} ({starter}): {int(p['PTS'])} pts, {int(p['REB'])} reb, "
+                f"{int(p['AST'])} ast, {int(p['STL'])} stl, {int(p['BLK'])} blk, {p['MIN']} min"
+            )
+        lines.append("")
+
+    return "\n".join(lines)
+
+
+def build_basketball_docs() -> list[dict]:
+    """Fetch and render every configured NBA Finals clinching game as a Markdown report."""
+    docs = []
+    for year in NBA_FINALS_YEARS:
+        title = f"{year} NBA Finals"
+        try:
+            infobox = parse_finals_infobox(year)
+            champion = resolve_team(infobox["champion"])
+            runnerup = resolve_team(infobox["runnerup"])
+            season = f"{year - 1}-{str(year)[2:]}"
+            game_id = find_clinching_game_id(season, champion["abbreviation"], runnerup["abbreviation"])
+            box = fetch_box_score(game_id)
+            markdown = render_markdown(year, infobox, box)
+        except Exception as exc:  # noqa: BLE001 - one bad year shouldn't kill the whole ingest
+            print(f"[ingest_basketball] skipping {title}: {exc}")
+            continue
+        docs.append(
+            {
+                "markdown": markdown,
+                "sport": "basketball",
+                "competition": "NBA Finals",
+                "season": season,
+                "teams": f"{infobox['champion']} vs {infobox['runnerup']}",
+                "source_title": title,
+                "url": "https://en.wikipedia.org/wiki/" + title.replace(" ", "_"),
+            }
+        )
+    return docs
+
+
+if __name__ == "__main__":
+    built_docs = build_basketball_docs()
+    print(f"Built {len(built_docs)} NBA Finals match reports.")
+    for d in built_docs:
+        print(f"- {d['source_title']}: {d['teams']}")
