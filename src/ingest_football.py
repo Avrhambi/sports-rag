@@ -11,12 +11,9 @@ wikitext directly via the MediaWiki API (no HTML scraping, no browser).
 
 import re
 
-import requests
-
 from src.config import UCL_FINALS_YEARS
-
-WIKIPEDIA_API_URL = "https://en.wikipedia.org/w/api.php"
-REQUEST_HEADERS = {"User-Agent": "sports-rag/0.1 (https://github.com/Avrhambi/sports-rag)"}
+from src.wikitext import clean_wikitext as _clean_generic
+from src.wikitext import extract_section, fetch_wikitext
 
 MONTHS = [
     "", "January", "February", "March", "April", "May", "June",
@@ -24,64 +21,19 @@ MONTHS = [
 ]
 
 
-def fetch_wikitext(title: str) -> str:
-    """Fetch the raw wikitext of the current revision of a Wikipedia article."""
-    params = {
-        "action": "query",
-        "prop": "revisions",
-        "rvprop": "content",
-        "rvslots": "main",
-        "titles": title,
-        "format": "json",
-        "redirects": 1,
-    }
-    response = requests.get(WIKIPEDIA_API_URL, params=params, headers=REQUEST_HEADERS, timeout=30)
-    response.raise_for_status()
-    pages = response.json()["query"]["pages"]
-    page = next(iter(pages.values()))
-    if "missing" in page:
-        raise ValueError(f"No Wikipedia page found for {title!r}")
-    return page["revisions"][0]["slots"]["main"]["*"]
-
-
-def extract_section(wikitext: str, heading: str) -> str:
-    """Return the text of a `==Heading==`/`===Heading===` section, up to the next
-    heading of the same or shallower level."""
-    match = re.search(rf"^(=+)\s*{re.escape(heading)}\s*\1\s*$", wikitext, re.M)
-    if not match:
-        raise ValueError(f"Section {heading!r} not found")
-    level = len(match.group(1))
-    start = match.end()
-    next_heading = re.search(rf"^={{2,{level}}}[^=].*$", wikitext[start:], re.M)
-    end = start + next_heading.start() if next_heading else len(wikitext)
-    return wikitext[start:end]
-
-
 def clean_wikitext(text: str) -> str:
-    """Strip wikitext markup down to plain, readable text."""
-    text = re.sub(r"<ref[^>]*>.*?</ref>", "", text, flags=re.S)
-    text = re.sub(r"<ref[^>]*/>", "", text)
+    """Resolve football-specific templates, then hand off to the generic cleaner."""
     text = re.sub(r"\{\{flagicon\|[^}]*\}\}", "", text, flags=re.I)
     text = re.sub(r"\{\{fbaicon\|[^}]*\}\}", "", text, flags=re.I)
     text = re.sub(r"\{\{fba\|[^}]*\}\}", "", text, flags=re.I)
     text = re.sub(r"\{\{#invoke:flag\|[^}]*\}\}", "", text, flags=re.I)
     text = re.sub(r"\{\{nowrap\|([^}]*)\}\}", r"\1", text, flags=re.I)
     text = re.sub(r"\{\{goal\|([^}|]+)(?:\|[^}]*)*\}\}", r"\1'", text, flags=re.I)
-    text = re.sub(r"\{\{pengoal\}\}", "[scored]", text, flags=re.I)
-    text = re.sub(r"\{\{penmiss\}\}", "[missed]", text, flags=re.I)
     text = re.sub(r"\{\{yel\|([^}|]*)\}\}", r"Yellow card \1'", text, flags=re.I)
     text = re.sub(r"\{\{red\|([^}|]*)\}\}", r"Red card \1'", text, flags=re.I)
     text = re.sub(r"\{\{suboff\|([^}|]*)\}\}", r"Substituted off \1'", text, flags=re.I)
     text = re.sub(r"\{\{subon\|([^}|]*)\}\}", r"Substituted on \1'", text, flags=re.I)
-    # Fallback: drop any remaining templates (one level of nesting).
-    for _ in range(3):
-        text = re.sub(r"\{\{[^{}]*\}\}", "", text)
-    text = re.sub(r"\[\[(?:[^|\]]*\|)?([^\]]+)\]\]", r"\1", text)
-    text = re.sub(r"'''(.*?)'''", r"\1", text)
-    text = re.sub(r"''(.*?)''", r"\1", text)
-    text = re.sub(r"<[^>]+>", "", text)
-    text = re.sub(r"\s+", " ", text).strip()
-    return text
+    return _clean_generic(text)
 
 
 def parse_start_date(raw: str) -> str:
