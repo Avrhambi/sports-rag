@@ -28,7 +28,7 @@ TESTSET_PATH = Path(__file__).resolve().parent / "qa_testset.json"
 # rather than let the whole run die on the first 429.
 RATE_LIMIT_DELAY_SECONDS = 13
 
-JUDGE_PROMPT = """You are grading a Hebrew answer to a sports-rules question.
+JUDGE_PROMPT = """You are grading a Hebrew answer to a sports-history question.
 Score two things from 0 to 1 (a decimal number each), based only on the
 provided context:
 - faithfulness: is every claim in the answer supported by the context?

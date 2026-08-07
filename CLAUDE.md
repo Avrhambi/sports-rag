@@ -25,9 +25,7 @@ competition (2022–2026); extend by adding years to `UCL_FINALS_YEARS` /
 - `src/generate.py` — Gemini prompt that answers in Hebrew grounded only in
   retrieved chunks
 - `app.py` — FastAPI app: `/api/ask`, `/api/health`, serves `static/`
-- `static/` — hand-written pitch/court-themed UI (no template framework;
-  copy still reads "sports rules" in places — a follow-up, not yet updated
-  for the finals-history domain)
+- `static/` — hand-written pitch/court-themed UI (no template framework)
 - `eval/` — seed Hebrew Q&A set (one fact per seeded final) + scoring script
 
 ## Run commands
