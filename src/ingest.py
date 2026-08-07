@@ -1,4 +1,4 @@
-"""Fetch Wikipedia rule pages and split them into tagged chunks.
+"""Fetch UCL/NBA finals match reports and split them into tagged chunks.
 
 Run as: python -m src.ingest
 """
@@ -8,92 +8,61 @@ import re
 
 import faiss
 import numpy as np
-import requests
 from sentence_transformers import SentenceTransformer
 
-from src.config import (
-    CHUNK_OVERLAP_WORDS,
-    CHUNK_SIZE_WORDS,
-    CHUNKS_PATH,
-    EMBEDDING_MODEL_NAME,
-    FAISS_INDEX_PATH,
-    RAW_DIR,
-    WIKIPEDIA_SOURCES,
-)
-
-WIKIPEDIA_API_URL = "https://en.wikipedia.org/w/api.php"
-# Wikipedia's API rejects requests with no descriptive User-Agent (403).
-REQUEST_HEADERS = {"User-Agent": "sports-rag/0.1 (https://github.com/Avrhambi/sports-rag)"}
-
-STOP_HEADINGS = ("== References ==", "== See also ==", "== External links ==", "== Notes ==")
+from src.config import CHUNK_SIZE_WORDS, CHUNKS_PATH, EMBEDDING_MODEL_NAME, FAISS_INDEX_PATH, RAW_DIR
+from src.ingest_basketball import build_basketball_docs
+from src.ingest_football import build_football_docs
 
 
-def fetch_wikipedia_plaintext(title: str) -> str:
-    """Fetch the full plaintext extract of a Wikipedia article."""
-    params = {
-        "action": "query",
-        "prop": "extracts",
-        "explaintext": 1,
-        "titles": title,
-        "format": "json",
-        "redirects": 1,
-    }
-    response = requests.get(WIKIPEDIA_API_URL, params=params, headers=REQUEST_HEADERS, timeout=30)
-    response.raise_for_status()
-    pages = response.json()["query"]["pages"]
-    page = next(iter(pages.values()))
-    if "extract" not in page:
-        raise ValueError(f"No content found for Wikipedia page: {title!r}")
-    return page["extract"]
+def chunk_markdown(markdown: str, max_words: int = CHUNK_SIZE_WORDS) -> list[str]:
+    """Split a match-report Markdown doc into one chunk per `##` section, each
+    prefixed with the document title for context. A section longer than
+    `max_words` (e.g. a two-team lineup block) is further split on its `###`
+    subheadings so a chunk never spans unrelated facts."""
+    title_match = re.match(r"^# (.+)$", markdown, re.M)
+    title = title_match.group(1) if title_match else ""
 
-
-def clean_text(text: str) -> str:
-    """Strip trailing Wikipedia boilerplate sections and collapse extra whitespace."""
-    for heading in STOP_HEADINGS:
-        idx = text.find(heading)
-        if idx != -1:
-            text = text[:idx]
-    text = re.sub(r"\n{3,}", "\n\n", text)
-    return text.strip()
-
-
-def chunk_text(text: str, chunk_size: int = CHUNK_SIZE_WORDS, overlap: int = CHUNK_OVERLAP_WORDS) -> list[str]:
-    """Split text into overlapping word-based chunks (approximates token windows)."""
-    words = text.split()
-    if not words:
-        return []
     chunks = []
-    step = max(chunk_size - overlap, 1)
-    for start in range(0, len(words), step):
-        chunk_words = words[start : start + chunk_size]
-        if not chunk_words:
-            break
-        chunks.append(" ".join(chunk_words))
-        if start + chunk_size >= len(words):
-            break
+    for section in re.split(r"^## ", markdown, flags=re.M)[1:]:
+        heading, _, body = section.partition("\n")
+        body = body.strip()
+        if len(body.split()) <= max_words:
+            chunks.append(f"{title} - {heading}\n\n{body}")
+            continue
+
+        subsections = re.split(r"^### ", body, flags=re.M)
+        preamble = subsections[0].strip()
+        if preamble:
+            chunks.append(f"{title} - {heading}\n\n{preamble}")
+        for sub in subsections[1:]:
+            subheading, _, subbody = sub.partition("\n")
+            chunks.append(f"{title} - {heading} - {subheading}\n\n{subbody.strip()}")
+
     return chunks
 
 
 def build_chunks() -> list[dict]:
-    """Fetch every configured Wikipedia source and split it into sport-tagged chunks."""
+    """Fetch every configured final and split its Markdown report into tagged chunks."""
     RAW_DIR.mkdir(parents=True, exist_ok=True)
+    docs = build_football_docs() + build_basketball_docs()
+
     all_chunks = []
-    for source in WIKIPEDIA_SOURCES:
-        title = source["title"]
-        text = clean_text(fetch_wikipedia_plaintext(title))
+    for doc in docs:
+        raw_path = RAW_DIR / f"{doc['source_title'].replace(' ', '_')}.md"
+        raw_path.write_text(doc["markdown"], encoding="utf-8")
 
-        raw_path = RAW_DIR / f"{title.replace(' ', '_').replace('/', '_')}.txt"
-        raw_path.write_text(text, encoding="utf-8")
-
-        url = "https://en.wikipedia.org/wiki/" + title.replace(" ", "_")
-        for i, chunk in enumerate(chunk_text(text)):
+        for i, text in enumerate(chunk_markdown(doc["markdown"])):
             all_chunks.append(
                 {
-                    "id": f"{source['sport']}-{i}",
-                    "text": chunk,
-                    "sport": source["sport"],
-                    "source_title": title,
-                    "url": url,
+                    "id": f"{doc['sport']}-{doc['source_title']}-{i}",
+                    "text": text,
+                    "sport": doc["sport"],
+                    "competition": doc["competition"],
+                    "season": doc["season"],
+                    "teams": doc["teams"],
+                    "source_title": doc["source_title"],
+                    "url": doc["url"],
                 }
             )
     return all_chunks
@@ -115,6 +84,6 @@ def build_index(chunks: list[dict]) -> None:
 
 if __name__ == "__main__":
     fetched_chunks = build_chunks()
-    print(f"Fetched and chunked {len(fetched_chunks)} chunks from {len(WIKIPEDIA_SOURCES)} sources.")
+    print(f"Fetched and chunked {len(fetched_chunks)} chunks from 10 finals (5 UCL + 5 NBA).")
     build_index(fetched_chunks)
     print(f"Built FAISS index at {FAISS_INDEX_PATH} ({len(fetched_chunks)} vectors).")
