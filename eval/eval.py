@@ -1,9 +1,11 @@
 """Score the RAG pipeline against a seed Hebrew Q&A set.
 
 Two tiers:
-  - Retrieval checks (always run, no API key needed): does an unfiltered
-    search surface the expected sport's chunks, and do expected keywords
-    show up in the retrieved context?
+  - Retrieval checks (always run): does an unfiltered search surface the
+    expected sport's chunks, and do expected keywords show up in the
+    retrieved context? These need no API key, but with one set they measure
+    the real system -- retrieval plans each question through Gemini, and
+    without a key it silently falls back to `src.plan.heuristic_plan`.
   - Generation checks (only run if GEMINI_API_KEY is set): Gemini judges
     each generated Hebrew answer for faithfulness and relevance against
     the retrieved context, and for correctness against a reference answer,
@@ -139,7 +141,13 @@ def mean(values: list[float]) -> float:
 
 def main() -> None:
     testset = load_testset()
-    retrieval_results = [score_retrieval(item) for item in testset]
+    # With a key set, each score_retrieval makes a planner call, so it needs
+    # the same free-tier pacing as the judging loop below.
+    retrieval_results = []
+    for i, item in enumerate(testset):
+        if GEMINI_API_KEY and i:
+            time.sleep(RATE_LIMIT_DELAY_SECONDS)
+        retrieval_results.append(score_retrieval(item))
 
     n = len(testset)
     sport_matches = [r["top_sport_match"] for r in retrieval_results if r["top_sport_match"] is not None]
@@ -165,6 +173,12 @@ def main() -> None:
             print(f"Generation - avg {metric}: {mean(values):.2f} ({len(judged)} answers judged)")
         correctness = [g.get("correctness", 0) if g else None for g in generation_results]
         print(f"  correctness by type: {breakdown_by_type(list(zip(testset, correctness)), fmt='.2f')}")
+
+        # Name the questions that dragged a type's mean down -- without this
+        # a regression shows up as a decimal with no way to chase it.
+        weak = [(i, g) for i, g in zip(testset, generation_results) if g and g.get("correctness", 1) < 1]
+        for item, scored in weak:
+            print(f"  imperfect: {item['id']} ({scored.get('correctness')}) -> {scored['answer'][:140]}")
 
 
 if __name__ == "__main__":

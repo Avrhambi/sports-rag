@@ -1,11 +1,12 @@
 """Embed a query (Hebrew or otherwise) and retrieve the closest sport-tagged chunks.
 
+What the query *means* -- which sport, which years, whether one chunk can even
+answer it -- is worked out in `src.plan`; this module only searches.
+
 Run as: python -m src.retrieve "<question>" [sport]
 """
 
 import json
-import re
-from datetime import date
 from functools import lru_cache
 
 import faiss
@@ -13,91 +14,17 @@ import numpy as np
 from sentence_transformers import SentenceTransformer
 
 from src.config import CHUNKS_PATH, EMBEDDING_MODEL_NAME, FAISS_INDEX_PATH
+from src.plan import QueryPlan, plan_query
 
-YEAR_PATTERN = re.compile(r"\b(?:19|20)\d{2}\b")
-# A chunk whose year (or any year the query resolves to) is at stake gets
-# guaranteed inclusion (see `retrieve`) rather than a soft score boost --
-# aggregate questions ("how many times did Real Madrid win in the last 5
-# years?") need every target year's full data (Match Info for the result,
-# Lineups for the roster), not just whichever chunk happens to score highest.
+# A chunk whose year the plan asks for gets guaranteed inclusion (see
+# `retrieve`) rather than a soft score boost -- aggregate questions ("how many
+# times did Real Madrid win in the last 5 years?") need every target year's
+# full data (Match Info for the result, Lineups for the roster), not just
+# whichever chunk happens to score highest.
 
-# Hebrew number words for "the last N years" phrasing, e.g. "בשלוש השנים האחרונות".
-_HEBREW_YEAR_COUNT_WORDS = {
-    "שלוש": 3, "שלושה": 3,
-    "ארבע": 4, "ארבעה": 4,
-    "חמש": 5, "חמישה": 5,
-}
-_LAST_N_YEARS_DIGIT = re.compile(r"(\d+)\s*ה?שנים\s*ה?אחרונות")
-_LAST_N_YEARS_WORD = re.compile(
-    r"(" + "|".join(_HEBREW_YEAR_COUNT_WORDS) + r")\s*ה?שנים\s*ה?אחרונות"
-)
-_LAST_TWO_YEARS = re.compile(r"שנתיים\s*ה?אחרונות")
-_THIS_YEAR = re.compile(r"\bהשנה\b")
-_LAST_YEAR = re.compile(r"בשנה שעברה|שנה שעברה|אשתקד")
-# No explicit count ("in recent years", "recently") -- default to a
-# generous window since the whole seeded corpus is only 5 years deep.
-_RECENT_YEARS_NO_COUNT = re.compile(r"בשנים\s*ה?אחרונות|לאחרונה")
-_RECENT_YEARS_DEFAULT_N = 5
-
-
-def most_recent_completed_final_year(today: date | None = None) -> int:
-    """Both UCL and NBA finals are played in May/June. From July onward the
-    next season is already underway and this calendar year's final has
-    already happened; before July, last calendar year's final is the most
-    recently completed one (a safe approximation around the fuzzy
-    May/June boundary -- exact playoff calendars vary slightly by year)."""
-    today = today or date.today()
-    return today.year if today.month >= 7 else today.year - 1
-
-
-def resolve_relative_years(query: str, anchor_year: int) -> set[str]:
-    """Translate Hebrew relative-year phrases ("השנה", "שנה שעברה", "בשלוש
-    השנים האחרונות") into absolute year strings anchored to `anchor_year`
-    (the most recently completed final). Gemini isn't told what year it is
-    unless the prompt says so, and this embedding model has no notion of
-    "recent" at all, so relative time expressions need to be resolved to
-    concrete years before they can inform retrieval."""
-    years: set[str] = set()
-
-    if _THIS_YEAR.search(query):
-        years.add(str(anchor_year + 1))
-    if _LAST_YEAR.search(query):
-        years.add(str(anchor_year))
-    if _LAST_TWO_YEARS.search(query):
-        years.update(str(y) for y in range(anchor_year - 1, anchor_year + 1))
-
-    word_match = _LAST_N_YEARS_WORD.search(query)
-    if word_match:
-        n = _HEBREW_YEAR_COUNT_WORDS[word_match.group(1)]
-        years.update(str(y) for y in range(anchor_year - n + 1, anchor_year + 1))
-
-    digit_match = _LAST_N_YEARS_DIGIT.search(query)
-    if digit_match:
-        n = int(digit_match.group(1))
-        years.update(str(y) for y in range(anchor_year - n + 1, anchor_year + 1))
-
-    if not years and _RECENT_YEARS_NO_COUNT.search(query):
-        n = _RECENT_YEARS_DEFAULT_N
-        years.update(str(y) for y in range(anchor_year - n + 1, anchor_year + 1))
-
-    return years
-
-# Likewise, competition-identifying keywords are a much more reliable sport
-# signal than raw cosine similarity for this small, closed two-sport domain.
-SPORT_KEYWORDS = {
-    "football": ["כדורגל", "ליגת האלופות", "champions league", "uefa", "football", "soccer"],
-    "basketball": ["כדורסל", "פיינלס", "nba", "basketball"],
-}
+# Likewise, the plan's sport is a much more reliable signal than raw cosine
+# similarity for this small, closed two-sport domain.
 SPORT_MATCH_BOOST = 0.15
-
-
-def detect_sport(query: str) -> str | None:
-    """Best-effort sport guess from competition-name keywords in the query."""
-    lowered = query.lower()
-    for sport_name, keywords in SPORT_KEYWORDS.items():
-        if any(keyword in lowered for keyword in keywords):
-            return sport_name
-    return None
 
 
 @lru_cache(maxsize=1)
@@ -112,19 +39,28 @@ def _load_index_and_chunks() -> tuple[faiss.Index, list[dict]]:
     return index, chunks
 
 
-def retrieve(query: str, sport: str | None = None, top_k: int = 4) -> list[dict]:
+def retrieve(
+    query: str,
+    sport: str | None = None,
+    top_k: int = 4,
+    plan: QueryPlan | None = None,
+) -> list[dict]:
     """Return the top_k chunks most similar to `query`, optionally filtered to one sport.
 
     The embedding model is multilingual, so a Hebrew query and the English chunk
     text land in the same vector space directly -- no translation step needed.
+
+    An explicit `sport` (from the UI's sport tabs) overrides the plan's guess.
+    Pass `plan` to reuse a plan the caller already has rather than paying for a
+    second planner call.
     """
     index, chunks = _load_index_and_chunks()
     model = _load_model()
+    plan = plan or plan_query(query)
 
     query_vec = np.asarray(model.encode([query], normalize_embeddings=True), dtype="float32")
-    query_years = set(YEAR_PATTERN.findall(query))
-    query_years |= resolve_relative_years(query, most_recent_completed_final_year())
-    detected_sport = None if sport else detect_sport(query)
+    query_years = plan.year_strings
+    detected_sport = None if sport else plan.sport_filter
     effective_sport = sport or detected_sport
     needs_rerank = bool(sport or query_years or detected_sport)
 
@@ -172,5 +108,7 @@ if __name__ == "__main__":
 
     query_arg = sys.argv[1] if len(sys.argv) > 1 else "מי ניצח בגמר ליגת האלופות 2022?"
     sport_arg = sys.argv[2] if len(sys.argv) > 2 else None
-    for r in retrieve(query_arg, sport=sport_arg):
+    query_plan = plan_query(query_arg)
+    print(f"plan: {query_plan}")
+    for r in retrieve(query_arg, sport=sport_arg, plan=query_plan):
         print(f"[{r['sport']}] {r['score']:.3f}  {r['text'][:100]}")

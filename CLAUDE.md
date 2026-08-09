@@ -20,8 +20,10 @@ competition (2022–2026); extend by adding years to `UCL_FINALS_YEARS` /
 - `src/ingest.py` — orchestrator: calls both ingesters, splits each Markdown
   report into section-aware chunks, embeds, builds the FAISS index (offline,
   rerunnable)
+- `src/plan.py` — turns a question into a `QueryPlan` (sport, years, intent)
+  via Gemini, with a frozen regex/keyword fallback for offline use
 - `src/retrieve.py` — embed a Hebrew query, FAISS search, sport filtering, plus
-  a year/competition-keyword re-rank boost (see Architecture notes)
+  plan-driven guaranteed inclusion and a re-rank boost (see Architecture notes)
 - `src/generate.py` — Gemini prompt that answers in Hebrew grounded only in
   retrieved chunks
 - `app.py` — FastAPI app: `/api/ask`, `/api/health`, serves `static/`
@@ -58,6 +60,15 @@ python eval/eval.py    # scores the pipeline against eval/qa_testset.json
   window — so a chunk never mixes unrelated facts; a section that runs long
   (e.g. a two-team lineup block) falls back to splitting on `###`
   subheadings.
+- Query planning in `src/plan.py`: retrieval needs to know which sport, which
+  years, and whether one chunk can answer the question at all — none of which
+  the embedding gives you. One Gemini call returns all three as a `QueryPlan`.
+  It replaced a growing pile of hand-written Hebrew regexes for relative-year
+  phrases; those still exist as `heuristic_plan`, the fallback used when no
+  API key is set (so `eval.py`'s retrieval tier still runs offline) or when
+  the planner call fails, but they are frozen — new phrasings belong in the
+  planner prompt, not in another regex. The fallback always reports `factoid`
+  intent, so callers degrade to plain top-k rather than guessing.
 - Retrieval re-ranking in `src/retrieve.py`: this embedding model doesn't
   reliably discriminate a specific year, or football vs. basketball, across
   near-identical templated finals reports (5 UCL finals / 5 NBA Finals that
