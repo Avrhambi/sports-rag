@@ -1,62 +1,209 @@
 [
   {
     "id": "football-1",
+    "type": "factoid",
     "question": "מי ניצח בגמר ליגת האלופות 2022?",
     "expected_sport": "football",
-    "expected_keywords": ["Real Madrid"]
+    "expected_keywords": ["Real Madrid"],
+    "reference_answer": "ריאל מדריד, שניצחה 1–0 את ליברפול."
   },
   {
     "id": "football-2",
+    "type": "factoid",
     "question": "היכן נערך גמר ליגת האלופות 2023?",
     "expected_sport": "football",
-    "expected_keywords": ["Atatürk"]
+    "expected_keywords": ["Atatürk"],
+    "reference_answer": "באצטדיון האולימפי אטאטורק באיסטנבול."
   },
   {
     "id": "football-3",
+    "type": "factoid",
     "question": "מי היה השופט בגמר ליגת האלופות 2024?",
     "expected_sport": "football",
-    "expected_keywords": ["Vinčić"]
+    "expected_keywords": ["Vinčić"],
+    "reference_answer": "סלבקו וינצ'יץ' מסלובניה."
   },
   {
     "id": "football-4",
+    "type": "factoid",
     "question": "מה הייתה התוצאה הסופית בגמר ליגת האלופות 2025?",
     "expected_sport": "football",
-    "expected_keywords": ["Paris Saint-Germain", "Inter Milan"]
+    "expected_keywords": ["Paris Saint-Germain", "Inter Milan"],
+    "reference_answer": "פריז סן ז'רמן ניצחה 5–0 את אינטר מילאן."
   },
   {
     "id": "football-5",
+    "type": "factoid",
     "question": "מי ניצח בעונשין בגמר ליגת האלופות 2026?",
     "expected_sport": "football",
-    "expected_keywords": ["Penalty shootout"]
+    "expected_keywords": ["Penalty shootout"],
+    "reference_answer": "פריז סן ז'רמן ניצחה 4–3 בדו-קרב הפנדלים מול ארסנל, אחרי 1–1 בתום ההארכה."
   },
   {
     "id": "basketball-1",
+    "type": "factoid",
     "question": "איזו קבוצה ניצחה באליפות ה-NBA ב-2022?",
     "expected_sport": "basketball",
-    "expected_keywords": ["Golden State Warriors"]
+    "expected_keywords": ["Golden State Warriors"],
+    "reference_answer": "גולדן סטייט ווריורס, שניצחה את בוסטון סלטיקס 4–2 בסדרה."
   },
   {
     "id": "basketball-2",
+    "type": "factoid",
     "question": "מי נבחר לשחקן ה-MVP בגמר ה-NBA 2023?",
     "expected_sport": "basketball",
-    "expected_keywords": ["Jokić"]
+    "expected_keywords": ["Jokić"],
+    "reference_answer": "ניקולה יוקיץ' מדנוור נאגטס."
   },
   {
     "id": "basketball-3",
+    "type": "factoid",
     "question": "מי היה המאמן הראשי של הקבוצה המנצחת בגמר ה-NBA 2024?",
     "expected_sport": "basketball",
-    "expected_keywords": ["Joe Mazzulla"]
+    "expected_keywords": ["Joe Mazzulla"],
+    "reference_answer": "ג'ו מזולה, מאמן בוסטון סלטיקס."
   },
   {
     "id": "basketball-4",
+    "type": "factoid",
     "question": "מה הייתה תוצאת הסדרה בגמר ה-NBA 2025?",
     "expected_sport": "basketball",
-    "expected_keywords": ["Oklahoma City Thunder"]
+    "expected_keywords": ["Oklahoma City Thunder"],
+    "reference_answer": "אוקלהומה סיטי ת'אנדר ניצחה את אינדיאנה פייסרס 4–3."
   },
   {
     "id": "basketball-5",
+    "type": "factoid",
     "question": "היכן נערך גמר ה-NBA 2026?",
     "expected_sport": "basketball",
-    "expected_keywords": ["San Antonio"]
+    "expected_keywords": ["San Antonio"],
+    "reference_answer": "המשחק הסוגר נערך בפרוסט בנק סנטר בסן אנטוניו, טקסס."
+  },
+
+  {
+    "id": "aggregate-football-1",
+    "type": "aggregate",
+    "question": "כמה פעמים ריאל מדריד זכתה בליגת האלופות בשנים 2022 עד 2026?",
+    "expected_sport": "football",
+    "expected_keywords": [
+      "Liverpool 0–1 Real Madrid",
+      "Borussia Dortmund 0–2 Real Madrid"
+    ],
+    "reference_answer": "פעמיים: ב-2022 (1–0 על ליברפול) וב-2024 (2–0 על בורוסיה דורטמונד)."
+  },
+  {
+    "id": "aggregate-football-2",
+    "type": "aggregate",
+    "question": "באיזה גמר ליגת אלופות בין 2022 ל-2026 נרשם הפרש השערים הגדול ביותר?",
+    "expected_sport": "football",
+    "expected_keywords": [
+      "Liverpool 0–1 Real Madrid",
+      "Manchester City 1–0 Inter Milan",
+      "Borussia Dortmund 0–2 Real Madrid",
+      "Paris Saint-Germain 5–0 Inter Milan",
+      "Paris Saint-Germain 1–1 Arsenal"
+    ],
+    "reference_answer": "בגמר 2025, שבו פריז סן ז'רמן ניצחה את אינטר מילאן 5–0 – הפרש של חמישה שערים."
+  },
+  {
+    "id": "aggregate-football-3",
+    "type": "aggregate",
+    "question": "באיזה גמר ליגת אלופות היה מספר הצופים הגדול ביותר, וכמה צופים היו בו?",
+    "expected_sport": "football",
+    "expected_keywords": [
+      "Attendance: 75,000",
+      "Attendance: 71,412",
+      "Attendance: 86,212",
+      "Attendance: 64,327",
+      "Attendance: 61,035"
+    ],
+    "reference_answer": "בגמר 2024 בוומבלי, עם 86,212 צופים."
+  },
+  {
+    "id": "aggregate-football-4",
+    "type": "comparison",
+    "question": "אילו קבוצות הופיעו ביותר מגמר ליגת אלופות אחד בין 2022 ל-2026?",
+    "expected_sport": "football",
+    "expected_keywords": [
+      "Liverpool 0–1 Real Madrid",
+      "Manchester City 1–0 Inter Milan",
+      "Borussia Dortmund 0–2 Real Madrid",
+      "Paris Saint-Germain 5–0 Inter Milan",
+      "Paris Saint-Germain 1–1 Arsenal"
+    ],
+    "reference_answer": "ריאל מדריד (2022, 2024), אינטר מילאן (2023, 2025) ופריז סן ז'רמן (2025, 2026)."
+  },
+  {
+    "id": "aggregate-basketball-1",
+    "type": "aggregate",
+    "question": "איזה שחקן קלע הכי הרבה נקודות במשחק סוגר של גמר ה-NBA בשנים 2022 עד 2026?",
+    "expected_sport": "basketball",
+    "expected_keywords": [
+      "Jalen Brunson (Starter): 45 pts",
+      "Jaylen Brown (Starter): 34 pts",
+      "Jayson Tatum (Starter): 31 pts",
+      "Shai Gilgeous-Alexander (Starter): 29 pts",
+      "Nikola Jokić (Starter): 28 pts"
+    ],
+    "reference_answer": "ג'יילן ברונסון, עם 45 נקודות במשחק הסוגר של גמר 2026."
+  },
+  {
+    "id": "aggregate-basketball-2",
+    "type": "aggregate",
+    "question": "כמה נקודות בסך הכול קלע ג'יילן בראון במשחקי הסיום של גמרי ה-NBA בין 2022 ל-2026?",
+    "expected_sport": "basketball",
+    "expected_keywords": [
+      "Jaylen Brown (Starter): 34 pts",
+      "Jaylen Brown (Starter): 21 pts"
+    ],
+    "reference_answer": "55 נקודות: 34 במשחק הסוגר של 2022 ו-21 במשחק הסוגר של 2024."
+  },
+  {
+    "id": "aggregate-basketball-3",
+    "type": "aggregate",
+    "question": "איזו סדרת גמר NBA בין 2022 ל-2026 הוכרעה רק במשחק השביעי?",
+    "expected_sport": "basketball",
+    "expected_keywords": [
+      "Oklahoma City Thunder won 4–3 over Indiana Pacers"
+    ],
+    "reference_answer": "גמר 2025, שבו אוקלהומה סיטי ת'אנדר ניצחה את אינדיאנה פייסרס 4–3."
+  },
+  {
+    "id": "aggregate-basketball-4",
+    "type": "aggregate",
+    "question": "באיזה משחק סוגר של גמר NBA היה הפרש הנקודות הגדול ביותר?",
+    "expected_sport": "basketball",
+    "expected_keywords": [
+      "Golden State Warriors 103 – Boston Celtics 90",
+      "Miami Heat 89 – Denver Nuggets 94",
+      "Dallas Mavericks 88 – Boston Celtics 106",
+      "Indiana Pacers 91 – Oklahoma City Thunder 103",
+      "New York Knicks 94 – San Antonio Spurs 90"
+    ],
+    "reference_answer": "במשחק הסוגר של גמר 2024, שבו בוסטון סלטיקס ניצחה את דאלאס מאבריקס 106–88 – הפרש של 18 נקודות."
+  },
+  {
+    "id": "cross-sport-1",
+    "type": "comparison",
+    "question": "מי זכה בגמר ליגת האלופות ומי זכה בגמר ה-NBA ב-2024?",
+    "expected_sport": null,
+    "expected_keywords": [
+      "Borussia Dortmund 0–2 Real Madrid",
+      "Boston Celtics won 4–1 over Dallas Mavericks"
+    ],
+    "reference_answer": "ריאל מדריד זכתה בליגת האלופות (2–0 על בורוסיה דורטמונד), ובוסטון סלטיקס זכתה בגמר ה-NBA (4–1 על דאלאס מאבריקס)."
+  },
+  {
+    "id": "multihop-1",
+    "type": "multihop",
+    "question": "מי אימן את אלופת ה-NBA באותן שנים שבהן ריאל מדריד זכתה בליגת האלופות?",
+    "expected_sport": null,
+    "expected_keywords": [
+      "Liverpool 0–1 Real Madrid",
+      "Champion head coach: Steve Kerr",
+      "Borussia Dortmund 0–2 Real Madrid",
+      "Champion head coach: Joe Mazzulla"
+    ],
+    "reference_answer": "ריאל מדריד זכתה ב-2022 וב-2024. ב-2022 אלופת ה-NBA הייתה גולדן סטייט ווריורס בהובלת סטיב קר, וב-2024 בוסטון סלטיקס בהובלת ג'ו מזולה."
   }
 ]
