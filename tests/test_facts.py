@@ -88,9 +88,18 @@ def test_football_block_lists_shootout_finals():
 
 
 def test_basketball_block_sums_points_across_separate_finals():
-    """The case a language model gets wrong: 34 in 2022 plus 21 in 2024."""
+    """The case a language model gets wrong: 34 in 2022 plus 21 in 2024. The
+    addends are spelled out so the total can't read as a single-game score."""
     block = "\n".join(basketball_block(BASKETBALL_FINALS))
-    assert "Most points across all deciding games in range: Jaylen Brown 55" in block
+    assert "Jaylen Brown: 55 total (2022: 34 + 2024: 21)" in block
+
+
+def test_basketball_block_separates_single_game_highs_from_multi_year_sums():
+    """A run answered "most points in a game" with a two-game sum, so the two
+    live under headings that say which is which."""
+    block = "\n".join(basketball_block(BASKETBALL_FINALS))
+    assert "Single-game scoring (one player in one deciding game):" in block
+    assert "never a single-game score" in block
 
 
 def test_basketball_block_ranks_margins_and_series_length():
@@ -101,5 +110,4 @@ def test_basketball_block_ranks_margins_and_series_length():
 
 def test_basketball_block_names_the_single_game_high():
     block = "\n".join(basketball_block(BASKETBALL_FINALS))
-    assert "Highest individual score in a deciding game: " in block
-    assert "34 points (2022)" in block
+    assert "Most points by one player in a single deciding game: Stephen Curry, 34 (2022)" in block

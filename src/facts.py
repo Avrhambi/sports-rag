@@ -121,28 +121,41 @@ def basketball_block(finals: list[dict]) -> list[str]:
         f"({widest['deciding_game']['point_margin']} points)"
     )
 
-    # Deciding games only -- the corpus holds no other game of each series, so
-    # these are per-game highs and career totals over those games alone.
+    # Deciding games only -- the corpus holds no other game of each series.
+    #
+    # Single-game highs and multi-year sums sit one line apart and are trivial
+    # to confuse: an eval run picked "Jaylen Brown 55" (two games added) as the
+    # answer to "most points in a game", which is Jalen Brunson's 45. Hence the
+    # explicit headings, and the addends spelled out beside every sum -- a
+    # figure that shows its working can't be mistaken for a single-game score.
     best_single = []
-    career_points: defaultdict[str, int] = defaultdict(int)
+    per_player: defaultdict[str, list[tuple[int, int]]] = defaultdict(list)
     for f in finals:
         if not f["players"]:
             continue
         top = max(f["players"], key=lambda p: p["points"])
         best_single.append((top["points"], top["name"], f["year"]))
         for p in f["players"]:
-            career_points[p["name"]] += p["points"]
+            per_player[p["name"]].append((f["year"], p["points"]))
 
-    if best_single:
-        points, name, year = max(best_single)
-        lines.append(f"Highest individual score in a deciding game: {name}, {points} points ({year})")
-        per_year = "; ".join(f"{y}: {n} {pts}" for pts, n, y in sorted(best_single, key=lambda b: b[2]))
-        lines.append(f"Top scorer per deciding game: {per_year}")
-        totals = sorted(career_points.items(), key=lambda kv: kv[1], reverse=True)[:5]
-        lines.append(
-            "Most points across all deciding games in range: "
-            + ", ".join(f"{n} {p}" for n, p in totals)
-        )
+    if not best_single:
+        return lines
+
+    lines.append("")
+    lines.append("Single-game scoring (one player in one deciding game):")
+    for points, name, year in sorted(best_single, key=lambda b: b[2]):
+        lines.append(f"- {year} deciding game, top scorer: {name} {points}")
+    points, name, year = max(best_single)
+    lines.append(f"- Most points by one player in a single deciding game: {name}, {points} ({year})")
+
+    lines.append(
+        "Multi-year sums (one player's points added across the deciding games "
+        "above -- a total over several years, never a single-game score):"
+    )
+    totals = sorted(per_player.items(), key=lambda kv: sum(p for _, p in kv[1]), reverse=True)
+    for name, games in totals[:5]:
+        addends = " + ".join(f"{year}: {points}" for year, points in sorted(games))
+        lines.append(f"- {name}: {sum(p for _, p in games)} total ({addends})")
     return lines
 
 
