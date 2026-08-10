@@ -15,17 +15,25 @@ hardwood amber.
 ## How it works
 
 ```
-Wikipedia wikitext (UCL finals) --\
-                                    +--ingest--> Markdown match reports --chunk (by section)--> embed (MiniLM) --> FAISS index
-nba_api + Wikipedia infobox (NBA) -/                                                                                    |
-                                                                                                                          |
-Hebrew question --embed (same MiniLM)--> FAISS search (+ sport filter, + year/competition re-rank boost)
-                                                                                                                          |
-                                                                    Gemini: answer in Hebrew, grounded
-                                                                    only in the retrieved EN chunks
-                                                                                                                          |
-                                                                    Hebrew answer + sources --> UI
+Wikipedia wikitext (UCL finals) --\                 /--> Markdown match reports --chunk (by section)--> embed (MiniLM) --> FAISS index
+                                    +--ingest------+
+nba_api + Wikipedia infobox (NBA) -/                \--> structured per-final records ------------------------------> data/facts.json
+
+Hebrew question --> plan (Gemini): which sport, which years, factoid or aggregate?
+                          |
+                          +--> FAISS search, filtered by the plan; every planned year's chunks are guaranteed in
+                          |
+                          +--> for non-factoid intents only: pre-computed totals and rankings from facts.json
+                                       |
+                                       v
+                    Gemini: answer in Hebrew, grounded only in the retrieved EN chunks
+                                       |
+                    Hebrew answer + sources --> UI
 ```
+
+Counting, ranking and summing are done in Python over `data/facts.json`, not
+by the model — the model gets the totals as another source and writes the
+answer around them.
 
 Embedding model: `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2`
 (local, multilingual, no API key) — the same model embeds the Hebrew query
@@ -43,7 +51,7 @@ cp .env.example .env          # fill in GEMINI_API_KEY
 ## Run
 
 ```bash
-python -m src.ingest          # fetch + chunk + embed -> data/faiss.index, data/chunks.json
+python -m src.ingest          # fetch + chunk + embed -> data/faiss.index, data/chunks.json, data/facts.json
 uvicorn app:app --reload      # http://127.0.0.1:8000
 ```
 

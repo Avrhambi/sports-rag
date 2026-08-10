@@ -10,7 +10,14 @@ import faiss
 import numpy as np
 from sentence_transformers import SentenceTransformer
 
-from src.config import CHUNK_SIZE_WORDS, CHUNKS_PATH, EMBEDDING_MODEL_NAME, FAISS_INDEX_PATH, RAW_DIR
+from src.config import (
+    CHUNK_SIZE_WORDS,
+    CHUNKS_PATH,
+    EMBEDDING_MODEL_NAME,
+    FACTS_PATH,
+    FAISS_INDEX_PATH,
+    RAW_DIR,
+)
 from src.ingest_basketball import build_basketball_docs
 from src.ingest_football import build_football_docs
 
@@ -42,10 +49,10 @@ def chunk_markdown(markdown: str, max_words: int = CHUNK_SIZE_WORDS) -> list[str
     return chunks
 
 
-def build_chunks() -> list[dict]:
+def build_chunks(docs: list[dict] | None = None) -> list[dict]:
     """Fetch every configured final and split its Markdown report into tagged chunks."""
     RAW_DIR.mkdir(parents=True, exist_ok=True)
-    docs = build_football_docs() + build_basketball_docs()
+    docs = docs if docs is not None else build_football_docs() + build_basketball_docs()
 
     all_chunks = []
     for doc in docs:
@@ -82,8 +89,18 @@ def build_index(chunks: list[dict]) -> None:
     CHUNKS_PATH.write_text(json.dumps(chunks, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
+def write_facts(docs: list[dict]) -> None:
+    """Persist the structured per-final records alongside the prose chunks."""
+    facts = [doc["facts"] for doc in docs if doc.get("facts")]
+    FACTS_PATH.parent.mkdir(parents=True, exist_ok=True)
+    FACTS_PATH.write_text(json.dumps(facts, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
 if __name__ == "__main__":
-    fetched_chunks = build_chunks()
-    print(f"Fetched and chunked {len(fetched_chunks)} chunks from 10 finals (5 UCL + 5 NBA).")
+    fetched_docs = build_football_docs() + build_basketball_docs()
+    fetched_chunks = build_chunks(fetched_docs)
+    print(f"Fetched and chunked {len(fetched_chunks)} chunks from {len(fetched_docs)} finals.")
+    write_facts(fetched_docs)
+    print(f"Wrote structured facts for {len(fetched_docs)} finals to {FACTS_PATH}.")
     build_index(fetched_chunks)
     print(f"Built FAISS index at {FAISS_INDEX_PATH} ({len(fetched_chunks)} vectors).")

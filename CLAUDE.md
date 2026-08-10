@@ -18,8 +18,10 @@ competition (2022–2026); extend by adding years to `UCL_FINALS_YEARS` /
   from `nba_api`, plus head coaches/MVP from a small Wikipedia infobox lookup
   (not exposed by any nba_api endpoint)
 - `src/ingest.py` — orchestrator: calls both ingesters, splits each Markdown
-  report into section-aware chunks, embeds, builds the FAISS index (offline,
-  rerunnable)
+  report into section-aware chunks, embeds, builds the FAISS index, and writes
+  `data/facts.json` (offline, rerunnable)
+- `src/facts.py` — deterministic aggregates (titles, margins, attendance
+  ranks, per-player point totals) over `data/facts.json`
 - `src/plan.py` — turns a question into a `QueryPlan` (sport, years, intent)
   via Gemini, with a frozen regex/keyword fallback for offline use
 - `src/retrieve.py` — embed a Hebrew query, FAISS search, sport filtering, plus
@@ -79,8 +81,16 @@ python eval/eval.py    # scores the pipeline against eval/qa_testset.json
   mode. Also avoid very short, mostly-numeric standalone chunks (e.g. a bare
   quarter-score table) — they can score anomalously high against unrelated
   queries; fold that data into a richer text chunk instead.
-- `data/faiss.index` and `data/chunks.json` are generated, gitignored, and
-  rebuilt via `python -m src.ingest` — never hand-edited.
+- Two parallel tracks come out of ingestion: prose chunks for retrieval, and
+  `data/facts.json` — one flat structured record per final (result, margin,
+  attendance, per-player points) built by `build_facts()` in each ingester.
+  `src/facts.py` turns those into a block of pre-computed totals and rankings
+  that `src/generate.py` prepends to the context for non-factoid intents, so
+  a count or a superlative never depends on the model adding up a box score.
+  Deliberately not a query engine: at ten finals every aggregate worth asking
+  fits in one block, so there is no SQL and nothing to plan at answer time.
+- `data/faiss.index`, `data/chunks.json` and `data/facts.json` are generated,
+  gitignored, and rebuilt via `python -m src.ingest` — never hand-edited.
 - Generation is grounded: the Gemini prompt in `src/generate.py` is instructed
   to answer only from retrieved chunks and say so if they don't cover the
   question, to avoid hallucinated match facts.

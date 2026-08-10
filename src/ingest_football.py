@@ -201,6 +201,50 @@ def parse_final(wikitext: str) -> dict:
     }
 
 
+SCORE_PATTERN = re.compile(r"(\d+)\s*[–-]\s*(\d+)")
+
+
+def parse_score(score: str) -> tuple[int, int] | None:
+    """Split a "0–1" style score (en dash or hyphen) into two ints."""
+    match = SCORE_PATTERN.search(score or "")
+    return (int(match.group(1)), int(match.group(2))) if match else None
+
+
+def build_facts(year: int, match: dict) -> dict:
+    """Flatten a parsed final into one row of structured, arithmetic-ready
+    facts. The Markdown report is for reading; this is for counting, and
+    keeping them separate means a total is never re-derived from prose."""
+    goals = parse_score(match["score"])
+    penalties = parse_score(match["penalty_score"])
+
+    winner = None
+    if goals and goals[0] != goals[1]:
+        winner = match["team1"] if goals[0] > goals[1] else match["team2"]
+    elif penalties and penalties[0] != penalties[1]:
+        winner = match["team1"] if penalties[0] > penalties[1] else match["team2"]
+
+    attendance = match["attendance"].replace(",", "").strip()
+    return {
+        "sport": "football",
+        "competition": "UEFA Champions League",
+        "year": year,
+        "team1": match["team1"],
+        "team2": match["team2"],
+        "score": match["score"],
+        "goals1": goals[0] if goals else None,
+        "goals2": goals[1] if goals else None,
+        "goal_margin": abs(goals[0] - goals[1]) if goals else None,
+        "winner": winner,
+        "loser": (match["team2"] if winner == match["team1"] else match["team1"]) if winner else None,
+        "decided_on_penalties": bool(penalties),
+        "penalty_score": match["penalty_score"] or None,
+        "after_extra_time": match["after_extra_time"],
+        "venue": match["stadium"],
+        "attendance": int(attendance) if attendance.isdigit() else None,
+        "referee": match["referee"],
+    }
+
+
 def render_markdown(year: int, match: dict) -> str:
     lines = [f"# {year} UEFA Champions League Final (Football / Soccer)", ""]
     lines += ["## Match Info"]
@@ -277,6 +321,7 @@ def build_football_docs() -> list[dict]:
         docs.append(
             {
                 "markdown": markdown,
+                "facts": build_facts(year, match),
                 "sport": "football",
                 "competition": "UEFA Champions League",
                 "season": match["season"] or str(year),

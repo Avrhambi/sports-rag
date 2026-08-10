@@ -5,6 +5,7 @@ from datetime import date
 from google import genai
 
 from src.config import GEMINI_API_KEY, GEMINI_MODEL_NAME
+from src.facts import derived_facts_block
 from src.plan import QueryPlan
 
 SYSTEM_PROMPT = """You are a sports history assistant covering UEFA Champions
@@ -37,6 +38,11 @@ def build_prompt(question: str, chunks: list[dict], plan: QueryPlan | None = Non
 
     if plan and plan.intent != "factoid":
         system_prompt = f"{system_prompt}\n{COMPLETENESS_INSTRUCTION}"
+        # Totals, margins and rankings arrive already computed in Python, so
+        # the answer never depends on the model adding up a box score.
+        computed = derived_facts_block(plan.sport_filter, plan.year_strings)
+        if computed:
+            context = f"[Source: computed totals over the finals below]\n{computed}\n\n{context}"
 
     return f"{system_prompt}\n\nSource excerpts:\n{context}\n\nQuestion (Hebrew): {question}\n\nAnswer (Hebrew):"
 

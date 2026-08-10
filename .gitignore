@@ -8,6 +8,7 @@ venv/
 data/raw/*
 data/faiss.index
 data/chunks.json
+data/facts.json
 !data/raw/.gitkeep
 
 .pytest_cache/

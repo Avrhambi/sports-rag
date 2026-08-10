@@ -12,6 +12,9 @@ DATA_DIR = ROOT_DIR / "data"
 RAW_DIR = DATA_DIR / "raw"
 FAISS_INDEX_PATH = DATA_DIR / "faiss.index"
 CHUNKS_PATH = DATA_DIR / "chunks.json"
+# Structured per-final records, parallel to the prose chunks: what counting
+# and ranking read instead of re-deriving numbers from the Markdown reports.
+FACTS_PATH = DATA_DIR / "facts.json"
 
 EMBEDDING_MODEL_NAME = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
 GEMINI_MODEL_NAME = "gemini-3.1-flash-lite"

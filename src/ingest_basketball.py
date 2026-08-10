@@ -68,6 +68,61 @@ def fetch_box_score(game_id: str) -> dict:
     return {"summary": summary, "players": traditional}
 
 
+def build_facts(year: int, infobox: dict, box: dict) -> dict:
+    """Flatten a Finals series and its deciding game into structured,
+    arithmetic-ready facts. The Markdown report is for reading; this is for
+    counting, so a total is never re-derived from prose."""
+    summary = box["summary"]
+    home, away = summary["homeTeam"], summary["awayTeam"]
+
+    def team_name(team: dict) -> str:
+        return f"{team['teamCity']} {team['teamName']}"
+
+    players = []
+    for _, p in box["players"].iterrows():
+        if not p["MIN"] or p["MIN"] != p["MIN"]:  # skip DNPs (empty or NaN minutes)
+            continue
+        players.append(
+            {
+                "name": p["PLAYER_NAME"],
+                "team": team_name(home) if p["TEAM_ID"] == home["teamId"] else team_name(away),
+                "starter": bool(p["START_POSITION"]),
+                "points": int(p["PTS"]),
+                "rebounds": int(p["REB"]),
+                "assists": int(p["AST"]),
+            }
+        )
+
+    champion_games = infobox.get("champion_games", "")
+    runnerup_games = infobox.get("runnerup_games", "")
+    return {
+        "sport": "basketball",
+        "competition": "NBA Finals",
+        "year": year,
+        "champion": infobox.get("champion", ""),
+        "runnerup": infobox.get("runnerup", ""),
+        "series_score": f"{champion_games}-{runnerup_games}" if champion_games else None,
+        "games_played": (
+            int(champion_games) + int(runnerup_games)
+            if champion_games.isdigit() and runnerup_games.isdigit()
+            else None
+        ),
+        "champion_coach": infobox.get("champion_coach", ""),
+        "runnerup_coach": infobox.get("runnerup_coach", ""),
+        "mvp": infobox.get("MVP", ""),
+        "venue": summary["arena"]["arenaName"],
+        "attendance": int(summary["attendance"]) if str(summary["attendance"]).isdigit() else None,
+        "deciding_game": {
+            "home_team": team_name(home),
+            "away_team": team_name(away),
+            "home_score": int(home["score"]),
+            "away_score": int(away["score"]),
+            "point_margin": abs(int(home["score"]) - int(away["score"])),
+        },
+        "players": players,
+    }
+
+
 def render_markdown(year: int, infobox: dict, box: dict) -> str:
     summary = box["summary"]
     home, away = summary["homeTeam"], summary["awayTeam"]
@@ -135,6 +190,7 @@ def build_basketball_docs() -> list[dict]:
         docs.append(
             {
                 "markdown": markdown,
+                "facts": build_facts(year, infobox, box),
                 "sport": "basketball",
                 "competition": "NBA Finals",
                 "season": season,
