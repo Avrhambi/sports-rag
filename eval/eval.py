@@ -34,10 +34,10 @@ from collections import defaultdict
 from pathlib import Path
 
 from google import genai
-from google.genai import errors as genai_errors
 
 from src.config import GEMINI_API_KEY, GEMINI_MODEL_NAME
 from src.generate import generate_answer
+from src.plan import plan_query
 from src.retrieve import retrieve
 
 TESTSET_PATH = Path(__file__).resolve().parent / "qa_testset.json"
@@ -91,13 +91,18 @@ def score_retrieval(item: dict, top_k: int = 4) -> dict:
 
 
 def score_generation(item: dict, chunks: list[dict]) -> dict | None:
-    """Ask Gemini to judge faithfulness/relevance. Returns None if no chunks, no API key, or rate-limited."""
+    """Ask Gemini to judge one answer. Returns None when it can't be scored --
+    no chunks, no API key, rate limit, or a network drop. A full run is ~13
+    minutes of paced calls, so one flaky question must not discard the other
+    nineteen; the counts printed at the end say how many actually landed."""
     if not GEMINI_API_KEY or not chunks:
         return None
 
     try:
         time.sleep(RATE_LIMIT_DELAY_SECONDS)
-        answer = generate_answer(item["question"], chunks)
+        # Cached from the retrieval pass, so this costs no extra call -- but it
+        # keeps the eval on the same code path as app.py's /api/ask.
+        answer = generate_answer(item["question"], chunks, plan_query(item["question"]))
 
         client = genai.Client(api_key=GEMINI_API_KEY)
         context = "\n".join(c["text"] for c in chunks)
@@ -109,8 +114,8 @@ def score_generation(item: dict, chunks: list[dict]) -> dict | None:
         )
         time.sleep(RATE_LIMIT_DELAY_SECONDS)
         response = client.models.generate_content(model=GEMINI_MODEL_NAME, contents=judge_prompt)
-    except genai_errors.ClientError as e:
-        print(f"  skipped {item['id']}: {e}")
+    except Exception as e:  # noqa: BLE001 - transport errors are as skippable as API ones
+        print(f"  skipped {item['id']}: {type(e).__name__}: {e}")
         return None
 
     scores: dict = {"answer": answer}

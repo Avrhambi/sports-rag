@@ -39,6 +39,29 @@ def _load_index_and_chunks() -> tuple[faiss.Index, list[dict]]:
     return index, chunks
 
 
+def plan_evidence_ids(chunks: list[dict], plan: QueryPlan, effective_sport: str | None) -> set[str]:
+    """Ids of the chunks the plan says must reach the answer, whatever their
+    similarity score.
+
+    With planned years, that is every chunk from those years: an aggregate
+    question needs each year's whole report -- Match Info for the result,
+    Box Score for the stats -- not just its best-matching section.
+
+    With no planned years, only a complex intent widens the net, to every
+    chunk of the planned sport. A superlative with no year in it ("which
+    final had the biggest crowd") still has to see every final to answer.
+    A factoid with no year is left to plain similarity search.
+    """
+    if not plan.year_strings and plan.intent == "factoid":
+        return set()
+    return {
+        chunk["id"]
+        for chunk in chunks
+        if (not plan.year_strings or any(y in chunk["source_title"] for y in plan.year_strings))
+        and (not effective_sport or chunk["sport"] == effective_sport)
+    }
+
+
 def retrieve(
     query: str,
     sport: str | None = None,
@@ -64,18 +87,7 @@ def retrieve(
     effective_sport = sport or detected_sport
     needs_rerank = bool(sport or query_years or detected_sport)
 
-    # Aggregate questions ("how many times did Real Madrid win in the last
-    # 5 years?") need every target year's full match report -- Match Info
-    # for the result, Lineups for the roster -- not just whichever chunks
-    # happen to score highest. Guarantee all of them rather than relying on
-    # a soft score boost that could still leave some years incomplete.
-    guaranteed_ids = {
-        chunk["id"]
-        for chunk in chunks
-        if query_years
-        and any(year in chunk["source_title"] for year in query_years)
-        and (not effective_sport or chunk["sport"] == effective_sport)
-    }
+    guaranteed_ids = plan_evidence_ids(chunks, plan, effective_sport)
     effective_top_k = max(top_k, len(guaranteed_ids))
 
     # Over-fetch the whole index whenever a sport filter or a score boost

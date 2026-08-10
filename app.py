@@ -6,6 +6,7 @@ from fastapi.staticfiles import StaticFiles
 from src.config import SPORTS
 from src.generate import generate_answer
 from src.models import AskRequest, AskResponse, SourceOut
+from src.plan import plan_query
 from src.retrieve import retrieve
 
 app = FastAPI(title="Sports Finals History RAG")
@@ -24,11 +25,15 @@ def ask(request: AskRequest) -> AskResponse:
     if request.sport is not None and request.sport not in SPORTS:
         raise HTTPException(status_code=400, detail=f"sport must be one of {SPORTS} or omitted.")
 
-    chunks = retrieve(question, sport=request.sport)
+    # Planned once and handed to both stages: retrieval uses it to decide what
+    # counts as evidence, generation to decide whether that evidence is a
+    # complete set worth counting over.
+    plan = plan_query(question)
+    chunks = retrieve(question, sport=request.sport, plan=plan)
     if not chunks:
         raise HTTPException(status_code=404, detail="No relevant match data found for this question.")
 
-    answer = generate_answer(question, chunks)
+    answer = generate_answer(question, chunks, plan)
     sources = [
         SourceOut(
             source_title=c["source_title"],
