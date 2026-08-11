@@ -14,6 +14,9 @@
   const errorState = document.getElementById("error-state");
 
   const SPORT_LABELS = { football: "כדורגל", basketball: "כדורסל" };
+  // Kept so a specific message from the API can replace it for one request
+  // without becoming the permanent text of the error line.
+  const GENERIC_ERROR = errorState.textContent;
 
   const TAGLINES = {
     "": "שאלו כל שאלה על גמרי ליגת האלופות וגמרי ה-NBA, וקבלו תשובה מבוססת על נתוני הגמרים ההיסטוריים",
@@ -124,6 +127,18 @@
         return;
       }
       if (!response.ok) {
+        // The API says why when it knows why -- an exhausted daily quota is
+        // not something to retry in ten seconds, and the generic line
+        // invites exactly that.
+        const detail = await response
+          .json()
+          .then((d) => d.detail)
+          .catch(() => null);
+        if (typeof detail === "string" && detail) {
+          errorState.textContent = detail;
+          errorState.hidden = false;
+          return;
+        }
         throw new Error(`Request failed: ${response.status}`);
       }
 
@@ -132,6 +147,7 @@
       answerSection.hidden = false;
     } catch (err) {
       console.error(err);
+      errorState.textContent = GENERIC_ERROR;
       errorState.hidden = false;
     } finally {
       loading.hidden = true;

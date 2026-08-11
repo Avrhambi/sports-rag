@@ -3,6 +3,7 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 
+from src import gemini
 from src.config import COMPETITION_NAME_HE, SPORT_NAME_HE, SPORTS
 from src.generate import generate_answer
 from src.models import AskRequest, AskResponse, SourceOut
@@ -73,7 +74,19 @@ def ask(request: AskRequest) -> AskResponse:
     if not chunks:
         raise HTTPException(status_code=404, detail="No relevant match data found for this question.")
 
-    answer = generate_answer(question, chunks, plan)
+    try:
+        answer = generate_answer(question, chunks, plan)
+    except Exception as exc:  # re-raised unless it turns out to be the quota
+        if not gemini.is_quota_error(exc):
+            raise
+        # src/gemini.py has already tried every key and waited out anything
+        # short. Reaching here means the day's allowance is gone, which is
+        # not "there is a problem with the line" -- the generic error the UI
+        # would otherwise show sends the user to retry immediately, forever.
+        raise HTTPException(
+            status_code=503,
+            detail="הגענו למכסת השאלות היומית מול שירות ה-AI. נסו שוב מאוחר יותר.",
+        ) from exc
     sources = [
         SourceOut(
             source_title=c["source_title"],
