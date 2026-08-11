@@ -91,9 +91,14 @@ python eval/eval.py    # scores the pipeline against eval/qa_testset.json
   counts but no years. So `build_facts()` emits a winner-first scoreline,
   `team_result` on every person, and tallies with their years, and
   `src/facts.py` renders rows shaped like the answer rather than columns to
-  be joined. When adding a computed line, check it cannot be mistaken for an
-  adjacent one — a multi-year points sum printed beside a single-game high
-  once got returned as the answer to "most points in a game".
+  be joined. Two things this cost us to learn: a computed line must be
+  unmistakable for an adjacent one (a multi-year points sum printed beside a
+  single-game high got returned as the answer to "most points in a game"),
+  and **the join has to run in the direction the question asks**. A per-year
+  squad list was verified present in the prompt and the model still answered
+  "Tatum never won" — it scanned for the most answer-shaped row, found the
+  MVP column, and concluded from that. `_individual_honours` therefore emits
+  one row per person, not one row per year.
 - Two parallel tracks come out of ingestion: prose chunks for retrieval, and
   `data/facts.json` — one flat structured record per final (result, margin,
   attendance, per-player points) built by `build_facts()` in each ingester.
