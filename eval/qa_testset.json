@@ -205,5 +205,126 @@
       "Champion head coach: Joe Mazzulla"
     ],
     "reference_answer": "ריאל מדריד זכתה ב-2022 וב-2024. ב-2022 אלופת ה-NBA הייתה גולדן סטייט ווריורס בהובלת סטיב קר, וב-2024 בוסטון סלטיקס בהובלת ג'ו מזולה."
+  },
+
+  {
+    "id": "existence-barcelona",
+    "type": "existence",
+    "question": "האם ברצלונה זכתה באליפות ב-5 השנים האחרונות?",
+    "expected_sport": "football",
+    "expected_keywords": [
+      "Liverpool 0–1 Real Madrid",
+      "Paris Saint-Germain 5–0 Inter Milan"
+    ],
+    "reference_answer": "לא. ברצלונה אינה מופיעה באף אחד מגמרי ליגת האלופות בין 2022 ל-2026, ולכן לא זכתה בהם."
+  },
+  {
+    "id": "existence-barcelona-negated",
+    "type": "existence",
+    "question": "האם ברצלונה לא זכתה באליפות ב-5 השנים האחרונות?",
+    "expected_sport": "football",
+    "expected_keywords": [
+      "Liverpool 0–1 Real Madrid",
+      "Paris Saint-Germain 5–0 Inter Milan"
+    ],
+    "reference_answer": "נכון, ברצלונה לא זכתה. היא אינה מופיעה באף אחד מגמרי ליגת האלופות בין 2022 ל-2026."
+  },
+  {
+    "id": "existence-porto",
+    "type": "existence",
+    "question": "האם פורטו זכתה בגמר ליגת האלופות?",
+    "expected_sport": "football",
+    "expected_keywords": [
+      "Manchester City 1–0 Inter Milan",
+      "Borussia Dortmund 0–2 Real Madrid"
+    ],
+    "reference_answer": "לא. פורטו אינה מופיעה באף אחד מגמרי ליגת האלופות בין 2022 ל-2026."
+  },
+  {
+    "id": "existence-brown-in-ucl",
+    "type": "existence",
+    "question": "האם ג'יילן בראון זכה בגמר ליגת האלופות?",
+    "expected_sport": "football",
+    "expected_keywords": [
+      "Manchester City 1–0 Inter Milan",
+      "Paris Saint-Germain 1–1 Arsenal"
+    ],
+    "reference_answer": "לא. ג'יילן בראון אינו מופיע באף אחד מגמרי ליגת האלופות בין 2022 ל-2026."
+  },
+  {
+    "id": "player-title-brown",
+    "type": "existence",
+    "question": "האם ג'יילן בראון זכה?",
+    "expected_sport": "basketball",
+    "expected_keywords": [
+      "Boston Celtics won 4–1 over Dallas Mavericks",
+      "Jaylen Brown"
+    ],
+    "reference_answer": "כן. ג'יילן בראון זכה באליפות ה-NBA עם בוסטון סלטיקס ב-2024, ובאותה שנה גם נבחר ל-MVP של הגמר."
+  },
+  {
+    "id": "player-title-tatum",
+    "type": "existence",
+    "question": "האם ג'ייסון טייטם זכה?",
+    "expected_sport": "basketball",
+    "expected_keywords": [
+      "Boston Celtics won 4–1 over Dallas Mavericks",
+      "Jayson Tatum"
+    ],
+    "reference_answer": "כן. ג'ייסון טייטום זכה באליפות ה-NBA עם בוסטון סלטיקס ב-2024. הוא לא נבחר ל-MVP של הגמר — התואר הזה הלך לג'יילן בראון."
+  },
+  {
+    "id": "scope-curry-titles",
+    "type": "existence",
+    "question": "האם סטף קרי זכה ביותר מאליפות אחת?",
+    "expected_sport": "basketball",
+    "expected_keywords": [
+      "Golden State Warriors won 4–2 over Boston Celtics",
+      "Stephen Curry"
+    ],
+    "reference_answer": "לא. בטווח המכוסה, 2022 עד 2026, סטפן קרי זכה באליפות אחת בלבד — ב-2022 עם גולדן סטייט ווריורס."
+  },
+  {
+    "id": "shape-short-series",
+    "type": "aggregate",
+    "question": "איזה גמר NBA נגמר בשישה משחקים או פחות?",
+    "expected_sport": "basketball",
+    "expected_keywords": [
+      "Golden State Warriors won 4–2 over Boston Celtics",
+      "Denver Nuggets won 4–1 over Miami Heat",
+      "Boston Celtics won 4–1 over Dallas Mavericks",
+      "New York Knicks won 4–1 over San Antonio Spurs"
+    ],
+    "reference_answer": "2022 — גולדן סטייט ווריורס ניצחה 4-2; 2023 — דנבר נאגטס ניצחה 4-1; 2024 — בוסטון סלטיקס ניצחה 4-1; 2026 — ניו יורק ניקס ניצחה 4-1. רק גמר 2025 נמשך שבעה משחקים."
+  },
+  {
+    "id": "uncovered-brown-average",
+    "type": "uncovered",
+    "question": "מה היה ממוצע הנקודות של ג'יילן בראון בשנה שבה זכה באליפות?",
+    "expected_sport": "basketball",
+    "expected_keywords": ["Jaylen Brown"],
+    "reference_answer": "הקורפוס מכסה רק את משחק ההכרעה של כל סדרה, ולכן ממוצע לסדרה שלמה אינו זמין. במשחק ההכרעה של גמר 2024, שבו בוסטון זכתה, בראון קלע 21 נקודות."
+  },
+  {
+    "id": "multihop-boston-loss",
+    "type": "multihop",
+    "question": "בשנים שבוסטון הפסידו באליפות מי זכתה בליגת האלופות?",
+    "expected_sport": null,
+    "expected_keywords": [
+      "Golden State Warriors won 4–2 over Boston Celtics",
+      "Liverpool 0–1 Real Madrid"
+    ],
+    "reference_answer": "בוסטון סלטיקס הפסידה בגמר ה-NBA ב-2022 בלבד. באותה שנה ריאל מדריד זכתה בליגת האלופות, 1–0 על ליברפול."
+  },
+  {
+    "id": "multihop-boston-loss-reworded",
+    "type": "multihop",
+    "question": "מי זכתה בליגת האלופות בשנים שבוסטון הפסידו באליפות?",
+    "expected_sport": null,
+    "expected_keywords": [
+      "Golden State Warriors won 4–2 over Boston Celtics",
+      "Liverpool 0–1 Real Madrid"
+    ],
+    "reference_answer": "בוסטון סלטיקס הפסידה בגמר ה-NBA ב-2022 בלבד. באותה שנה ריאל מדריד זכתה בליגת האלופות, 1–0 על ליברפול."
   }
 ]

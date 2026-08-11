@@ -30,7 +30,7 @@ from src.config import (
 )
 
 Sport = Literal["football", "basketball", "any"]
-Intent = Literal["factoid", "aggregate", "comparison", "multihop"]
+Intent = Literal["factoid", "existence", "aggregate", "comparison", "multihop"]
 
 
 class QueryPlan(BaseModel):
@@ -72,6 +72,10 @@ year outside the covered lists above.
 
 intent:
 - "factoid": one fact from one match (winner, venue, referee, MVP, score).
+- "existence": a yes/no question about whether some team, player or event
+  ever appears ("did Barcelona win", "did X not win", "did X win more than
+  once"). Answering "no" needs the whole covered set, so list every covered
+  year of the relevant sport, exactly as for an aggregate.
 - "aggregate": counting, summing, or a superlative across several matches
   ("how many times", "who scored the most", "the biggest margin").
 - "comparison": facts from several matches set side by side.

@@ -33,3 +33,31 @@ UCL_FINALS_YEARS = [2022, 2023, 2024, 2025, 2026]
 NBA_FINALS_YEARS = [2022, 2023, 2024, 2025, 2026]
 
 SPORTS = ["football", "basketball"]
+
+# What the corpus contains, stated explicitly so the answerer can tell "absent
+# from a complete set" (an answer) from "outside what we hold" (a refusal).
+# `unit` is the honest part: an NBA Finals report is one game of a series, so
+# anything per-series is outside coverage no matter how good retrieval is.
+CORPUS_COVERAGE = {
+    "football": {
+        "competition": "UEFA Champions League final",
+        "years": UCL_FINALS_YEARS,
+        "unit": "the final match itself, with both full squads",
+    },
+    "basketball": {
+        "competition": "NBA Finals",
+        "years": NBA_FINALS_YEARS,
+        "unit": "the series-clinching game only, with both full box scores",
+    },
+}
+
+
+def coverage_summary(sport: str | None = None) -> str:
+    """One line per covered competition, for the answerer's prompt."""
+    lines = []
+    for name, info in CORPUS_COVERAGE.items():
+        if sport and name != sport:
+            continue
+        years = ", ".join(str(y) for y in info["years"])
+        lines.append(f"- {info['competition']}: {years} — {info['unit']}")
+    return "\n".join(lines)

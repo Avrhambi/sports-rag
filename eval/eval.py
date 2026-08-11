@@ -47,27 +47,37 @@ TESTSET_PATH = Path(__file__).resolve().parent / "qa_testset.json"
 RATE_LIMIT_DELAY_SECONDS = 13
 
 JUDGE_PROMPT = """You are grading a Hebrew answer to a sports-history question.
-Score three things from 0 to 1 (a decimal number each):
+Score four things:
 - faithfulness: is every claim in the answer supported by the context?
 - relevance: does the answer directly address the question?
 - correctness: does the answer state the same facts as the reference answer?
   Judge this against the reference only, ignoring the context. An answer that
   declines to answer, or that covers only part of what the reference states,
   is not correct. Wording and phrasing may differ freely.
+- abstained: 1 if the answer declines to answer -- says the sources lack the
+  information, that it cannot tell, or similar -- and 0 if it commits to an
+  answer. Score this on what the answer does, not on whether it is right. A
+  confident wrong answer is 0. "No, that did not happen" is 0, not an
+  abstention: it is an answer.
 
 Question (Hebrew): {question}
 Context: {context}
 Reference answer (Hebrew): {reference}
 Answer (Hebrew): {answer}
 
-Respond with exactly three lines:
+Respond with exactly four lines:
 faithfulness: <0-1>
 relevance: <0-1>
 correctness: <0-1>
+abstained: <0 or 1>
 """
 
-# Reported in this order so factoids (the easy tier) come first.
-TYPE_ORDER = ["factoid", "aggregate", "comparison", "multihop"]
+# Reported in this order so factoids (the easy tier) come first. `existence`
+# is the closed-world tier -- yes/no questions whose answer is often an
+# absence. `uncovered` questions are unanswerable by design: the right
+# behaviour there is to abstain and say what is covered instead.
+TYPE_ORDER = ["factoid", "existence", "aggregate", "comparison", "multihop", "uncovered"]
+ANSWERABLE_TYPES = [t for t in TYPE_ORDER if t != "uncovered"]
 
 
 def load_testset() -> list[dict]:
@@ -172,16 +182,44 @@ def main() -> None:
         generation_results.append(score_generation(item, r["chunks"]))
 
     judged = [g for g in generation_results if g]
+    skipped = n - len(judged)
+    if skipped:
+        # Skipped questions leave the denominator, so a run that drops its
+        # hard questions reports a better score than it earned. Say so.
+        print(f"Generation - WARNING: {skipped} of {n} questions could not be judged and are excluded below.")
+
     if judged:
         for metric in ("faithfulness", "relevance", "correctness"):
+            # Missing metric counts as 0 here and as unscored in the listing
+            # below; keep both on the same default so a parse failure can't
+            # depress the mean while hiding from the report that explains it.
             values = [g.get(metric, 0) for g in judged]
             print(f"Generation - avg {metric}: {mean(values):.2f} ({len(judged)} answers judged)")
         correctness = [g.get("correctness", 0) if g else None for g in generation_results]
         print(f"  correctness by type: {breakdown_by_type(list(zip(testset, correctness)), fmt='.2f')}")
 
+        # The axis every reported failure lives on: refusing a question the
+        # corpus can answer. Scored only over answerable types -- abstaining
+        # on an `uncovered` question is the correct behaviour, not a miss.
+        answerable = [
+            (item, g.get("abstained", 0))
+            for item, g in zip(testset, generation_results)
+            if g and item["type"] in ANSWERABLE_TYPES
+        ]
+        if answerable:
+            rate = mean([a for _, a in answerable])
+            print(f"Generation - false-abstention rate: {rate:.0%} ({len(answerable)} answerable questions)")
+            refused = [item["id"] for item, a in answerable if a]
+            if refused:
+                print(f"  refused: {', '.join(refused)}")
+
+        uncovered = [g.get("abstained", 0) for item, g in zip(testset, generation_results) if g and item["type"] == "uncovered"]
+        if uncovered:
+            print(f"Generation - correct abstention on uncovered questions: {mean(uncovered):.0%} ({len(uncovered)} questions)")
+
         # Name the questions that dragged a type's mean down -- without this
         # a regression shows up as a decimal with no way to chase it.
-        weak = [(i, g) for i, g in zip(testset, generation_results) if g and g.get("correctness", 1) < 1]
+        weak = [(i, g) for i, g in zip(testset, generation_results) if g and g.get("correctness", 0) < 1]
         for item, scored in weak:
             print(f"  imperfect: {item['id']} ({scored.get('correctness')}) -> {scored['answer'][:140]}")
 
