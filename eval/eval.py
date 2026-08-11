@@ -105,7 +105,15 @@ def load_testset(only: list[str] | None = None, as_typed: bool = False) -> list[
 
 
 def score_retrieval(item: dict, top_k: int = 4) -> dict:
-    chunks = retrieve(item["question"], sport=None, top_k=top_k)
+    # Planned explicitly (and cached, so `retrieve` below costs no second
+    # call) to find out whether this question was planned at all. On a quota
+    # outage `plan_query` falls back to the frozen heuristics, which report
+    # `factoid` for everything -- no guaranteed evidence, no completeness
+    # promise -- so every aggregate collapses to top-4 and coverage craters.
+    # A run that hit that wall once reported "as-typed 68% vs clean 91%" and
+    # looked like a phrasing finding; it was measuring the fallback.
+    plan = plan_query(item["question"])
+    chunks = retrieve(item["question"], sport=None, top_k=top_k, plan=plan)
     # Cross-sport questions have no single expected sport -- None here means
     # "not applicable", and main() drops those from the sport-match rate.
     top_sport_match = None
@@ -117,6 +125,7 @@ def score_retrieval(item: dict, top_k: int = 4) -> dict:
         "top_sport_match": top_sport_match,
         "keyword_coverage": len(keyword_hits) / len(item["expected_keywords"]),
         "chunks": chunks,
+        "degraded": plan.degraded,
     }
 
 
@@ -213,6 +222,19 @@ def main(only: list[str] | None = None, repeats: int = 1, as_typed: bool = False
     n = len(testset)
     sport_matches = [r["top_sport_match"] for r in retrieval_results if r["top_sport_match"] is not None]
     keyword_coverages = [r["keyword_coverage"] for r in retrieval_results]
+
+    # Say this before any number, and loudly. The frozen fallback plans every
+    # question as a single-fact lookup, so an outage turns the aggregate and
+    # existence tiers into plain top-4 and the run reports a retrieval
+    # regression that is really a spent quota.
+    unplanned = [item["id"] for item, r in zip(testset, retrieval_results) if r["degraded"]]
+    if unplanned:
+        print(
+            f"!! {len(unplanned)} of {n} questions were never planned - the planner was "
+            f"unavailable and the frozen heuristics stood in. Every number below is measuring "
+            f"that fallback, not the system. Re-run when the planner is back."
+        )
+        print(f"   unplanned: {', '.join(unplanned)}")
 
     print(f"Retrieval - top result matches expected sport: {mean(sport_matches):.0%} ({len(sport_matches)} single-sport questions)")
     print(f"Retrieval - avg expected-keyword coverage: {mean(keyword_coverages):.0%} ({n} questions)")
