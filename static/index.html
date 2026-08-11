@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>מגרש הגמרים — כדורגל וכדורסל</title>
+<title>ארכיון הגמרים — כדורגל וכדורסל</title>
 <meta name="description" content="שאלו כל שאלה על גמרי ליגת האלופות וגמרי ה-NBA וקבלו תשובה מבוססת על נתוני הגמרים ההיסטוריים" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -61,7 +61,7 @@
         </svg>
         <div class="brand-text">
           <p class="brand-eyebrow">Finals History</p>
-          <h1 class="brand-title">מגרש הגמרים</h1>
+          <h1 class="brand-title">ארכיון הגמרים</h1>
         </div>
       </div>
 
@@ -100,6 +100,11 @@
         <div class="center-circle-ring" aria-hidden="true"></div>
         <label class="sr-only" for="question">השאלה שלכם</label>
         <textarea id="question" name="question" placeholder="מה תרצו לדעת?" rows="2" required></textarea>
+        <button type="button" class="clear-btn" id="clear-btn" aria-label="נקו את השאלה" hidden>
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+            <path d="M6 6l12 12M18 6L6 18" />
+          </svg>
+        </button>
         <button type="submit" class="whistle-btn" aria-label="שריקת פתיחה — שלחו שאלה">
           <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M2.5 11h3.2" />
@@ -119,11 +124,6 @@
       <section class="ruling-box" id="answer-section" hidden aria-live="polite">
         <h2 class="ruling-heading">התוצאה הרשמית</h2>
         <div class="ruling-text" id="answer-text"></div>
-      </section>
-
-      <section class="sources-board" id="sources-section" hidden>
-        <h2 class="sources-heading">מקורות מהגמר</h2>
-        <div class="sub-tiles" id="sources-list"></div>
       </section>
 
       <p class="empty-state" id="empty-state" hidden>הפרט הזה לא נמצא במאגר הגמרים שלנו. נסו לנסח את השאלה אחרת.</p>

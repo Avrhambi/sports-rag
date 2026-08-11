@@ -5,11 +5,11 @@
   const tabs = Array.from(document.querySelectorAll(".sport-tab"));
   const taglineEl = document.querySelector(".tagline");
 
+  const clearBtn = document.getElementById("clear-btn");
+
   const loading = document.getElementById("loading");
   const answerSection = document.getElementById("answer-section");
   const answerText = document.getElementById("answer-text");
-  const sourcesSection = document.getElementById("sources-section");
-  const sourcesList = document.getElementById("sources-list");
   const emptyState = document.getElementById("empty-state");
   const errorState = document.getElementById("error-state");
 
@@ -41,10 +41,24 @@
 
   function hideResults() {
     answerSection.hidden = true;
-    sourcesSection.hidden = true;
     emptyState.hidden = true;
     errorState.hidden = true;
   }
+
+  // Only offered once there is something to clear, so it never sits there as
+  // a live control over an empty box.
+  function syncClearButton() {
+    clearBtn.hidden = questionInput.value.trim() === "";
+  }
+
+  questionInput.addEventListener("input", syncClearButton);
+  clearBtn.addEventListener("click", () => {
+    questionInput.value = "";
+    syncClearButton();
+    hideResults();
+    questionInput.focus();
+  });
+  syncClearButton();
 
   // The model still emits the occasional Markdown bullet or bold run despite
   // the prompt asking for plain prose, and textContent rendered the asterisks
@@ -93,35 +107,7 @@
     }
   }
 
-  function renderSources(sources) {
-    sourcesList.innerHTML = "";
-    sources.forEach((source, i) => {
-      const tile = document.createElement("button");
-      tile.type = "button";
-      tile.className = "sub-tile";
-      tile.setAttribute("aria-expanded", "false");
-      tile.innerHTML = `
-        <span class="tile-number">${String(i + 1).padStart(2, "0")}</span>
-        <span>${source.source_title}</span>
-        <span class="tile-sport">${SPORT_LABELS[source.sport] ?? source.sport}</span>
-      `;
-
-      const panel = document.createElement("div");
-      panel.className = "sub-tile-panel";
-      panel.hidden = true;
-      panel.innerHTML = `<p>${source.text}</p><a href="${source.url}" target="_blank" rel="noopener noreferrer">${source.url}</a>`;
-
-      tile.addEventListener("click", () => {
-        const expanded = tile.getAttribute("aria-expanded") === "true";
-        tile.setAttribute("aria-expanded", String(!expanded));
-        panel.hidden = expanded;
-      });
-
-      sourcesList.append(tile, panel);
-    });
-    sourcesSection.hidden = sources.length === 0;
-  }
-
+  // /api/ask still returns `sources`; the UI no longer shows them.
   async function askQuestion(question) {
     hideResults();
     loading.hidden = false;
@@ -144,7 +130,6 @@
       const data = await response.json();
       renderAnswer(data.answer, data.degraded, data.off_tab_sport);
       answerSection.hidden = false;
-      renderSources(data.sources);
     } catch (err) {
       console.error(err);
       errorState.hidden = false;

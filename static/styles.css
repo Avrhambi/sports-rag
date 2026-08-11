@@ -295,6 +295,41 @@ body.sport-basketball .pitch-centerline {
   outline-offset: 3px;
 }
 
+/* Sits inside the question pill at its trailing edge -- left, under RTL --
+   which is where a clear affordance is expected, and well clear of the send
+   whistle centred below. */
+.clear-btn {
+  position: absolute;
+  top: 50%;
+  inset-inline-end: 14px;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: #6b6a63;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+/* `display: grid` above outranks the UA rule behind the hidden attribute, so
+   without this the button stays on screen over an empty box. */
+.clear-btn[hidden] {
+  display: none;
+}
+
+.clear-btn:hover {
+  background: rgba(0, 0, 0, 0.08);
+  color: var(--ink);
+}
+
+.clear-btn:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 2px;
+}
+
 .whistle-btn {
   position: absolute;
   bottom: -26px;
@@ -473,80 +508,6 @@ body.sport-basketball .pitch-centerline {
   .switch-sport-btn {
     transition: none;
   }
-}
-
-/* ---------- sources: substitution-board tiles ---------- */
-
-.sources-board {
-  max-width: 640px;
-  margin: 0 auto 40px;
-  text-align: right;
-}
-
-.sources-heading {
-  margin: 0 0 14px;
-  font-family: var(--font-body);
-  font-weight: 700;
-  font-size: 0.95rem;
-  color: var(--line);
-}
-
-.sub-tiles {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.sub-tile {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: var(--ink);
-  color: var(--chalk);
-  border: none;
-  border-radius: 8px;
-  padding: 12px 16px;
-  font-family: var(--font-body);
-  font-size: 0.92rem;
-  font-weight: 500;
-  cursor: pointer;
-  text-align: right;
-}
-
-.sub-tile:focus-visible {
-  outline: 2px solid var(--amber);
-  outline-offset: 3px;
-}
-
-.sub-tile .tile-number {
-  font-family: var(--font-mono);
-  font-weight: 700;
-  color: var(--amber);
-  flex-shrink: 0;
-}
-
-.sub-tile .tile-sport {
-  margin-inline-start: auto;
-  font-size: 0.78rem;
-  color: var(--line);
-}
-
-.sub-tile-panel {
-  direction: ltr;
-  text-align: left;
-  font-family: var(--font-body);
-  font-size: 0.9rem;
-  line-height: 1.65;
-  background: var(--chalk);
-  color: var(--ink);
-  border-radius: 8px;
-  padding: 16px 18px;
-  margin-top: -2px;
-}
-
-.sub-tile-panel a {
-  color: var(--surface);
 }
 
 /* ---------- empty / error states ---------- */
