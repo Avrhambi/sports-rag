@@ -3,14 +3,14 @@
 Ask questions **in Hebrew** about historical **UEFA Champions League** and
 **NBA Finals** matches — winners, venues, referees/officials, lineups, key
 events, box scores — and get answers grounded in structured match-report
-data, with sources you can expand to check the original text yourself.
-Seeded with the last 5 finals of each competition (2022–2026).
+data. Seeded with the last 5 finals of each competition (2022–2026).
 
 The UI is laid out as a top-down pitch/court diagram rather than a generic
-chat window: the question box doubles as the center circle, answers render
-inside a penalty-box-style frame, and sources appear as substitution-board
-tiles. Selecting a sport swaps the whole page between turf green and
-hardwood amber.
+chat window: the question box doubles as the center circle, and answers
+render inside a penalty-box-style frame. Selecting a sport swaps the whole
+page between turf green and hardwood amber — and scopes the answer, so a
+question about the other sport is told which tab to ask it on rather than
+answered from the wrong finals.
 
 ## How it works
 
@@ -28,7 +28,7 @@ Hebrew question --> plan (Gemini): which sport, which years, factoid or aggregat
                                        v
                     Gemini: answer in Hebrew, grounded only in the retrieved EN chunks
                                        |
-                    Hebrew answer + sources --> UI
+                    Hebrew answer --> UI   (/api/ask also returns the source chunks)
 ```
 
 Counting, ranking and summing are done in Python over `data/facts.json`, not

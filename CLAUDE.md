@@ -90,11 +90,15 @@ python -m eval.eval --as-typed   # the same questions, phrased the way users typ
   `eval/qa_testset.json` carries an `as_typed` form of every question and
   `python -m eval.eval --as-typed` re-runs the set in it, against the same
   keywords and reference answers, so the two runs compare directly.
-- The UI's sport tab is sticky and the question is not. `resolve_sport()` in
-  `app.py` lets a question that names its competition beat a tab left over
-  from the previous search, and returns `sport_override` so the answer says
-  the tab was set aside. Obeying the tab silently turned an NBA question asked
-  under the כדורגל tab into a refusal over five Champions League chunks.
+- The UI's sport tab is a scope, and an off-tab question is answered as such.
+  `off_tab_sport()` in `app.py` detects that the plan's sport is not the
+  selected tab and returns, before retrieval, the one answer Python writes
+  itself: what this tab covers, what the question was about, and how to get
+  an answer. Searching past the mismatch instead — pushing a UCL question
+  through the basketball filter — produced a refusal phrased as missing data,
+  which blamed the corpus for what the tab caused. It also spends one Gemini
+  call instead of two. `off_tab_sport` in the response drives a one-click
+  switch-and-re-ask in the UI.
 - Retrieval re-ranking in `src/retrieve.py`: this embedding model doesn't
   reliably discriminate a specific year, or football vs. basketball, across
   near-identical templated finals reports (5 UCL finals / 5 NBA Finals that
