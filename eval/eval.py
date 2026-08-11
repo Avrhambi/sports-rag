@@ -78,13 +78,27 @@ TYPE_ORDER = ["factoid", "existence", "aggregate", "comparison", "multihop", "un
 ANSWERABLE_TYPES = [t for t in TYPE_ORDER if t != "uncovered"]
 
 
-def load_testset(only: list[str] | None = None) -> list[dict]:
+def load_testset(only: list[str] | None = None, as_typed: bool = False) -> list[dict]:
     """The whole set, or just the questions whose id contains one of `only`.
 
     A full run costs ~3 calls per question and the free tier allows 500 a
     day, so re-checking the handful that failed has to be possible without
-    spending a run's worth of quota on the ones that already pass."""
+    spending a run's worth of quota on the ones that already pass.
+
+    `as_typed` swaps each question for its `as_typed` phrasing: the same
+    question as a real user actually types it -- no question mark, no geresh
+    in transliterated names ("גיילן" for "ג'יילן"), "ב5" for "ב-5", a nickname
+    instead of a full club name, and often no competition named at all. The
+    expected keywords and the reference answer are unchanged, so the numbers
+    line up column-for-column against a normal run and the difference is
+    purely what the phrasing cost. It is a separate run rather than extra
+    questions because a full pass is already ~3 calls per question."""
     testset = json.loads(TESTSET_PATH.read_text(encoding="utf-8"))
+    if as_typed:
+        testset = [
+            {**item, "question": item["as_typed"]} if item.get("as_typed") else item
+            for item in testset
+        ]
     if not only:
         return testset
     return [item for item in testset if any(fragment in item["id"] for fragment in only)]
@@ -180,8 +194,10 @@ def score_generation_repeated(item: dict, chunks: list[dict], repeats: int) -> t
     return last, scores
 
 
-def main(only: list[str] | None = None, repeats: int = 1) -> None:
-    testset = load_testset(only)
+def main(only: list[str] | None = None, repeats: int = 1, as_typed: bool = False) -> None:
+    testset = load_testset(only, as_typed)
+    if as_typed:
+        print("Asking each question the way a user actually types it (--as-typed).")
     if only:
         print(f"Running {len(testset)} of the full set, filtered by {only}.")
     if repeats > 1:
@@ -284,11 +300,15 @@ if __name__ == "__main__":
     import sys
 
     # e.g. `python -m eval.eval multihop existence` to re-check two types,
-    # or `python -m eval.eval --repeat 3 player-title` to measure variance.
+    # `python -m eval.eval --repeat 3 player-title` to measure variance, or
+    # `python -m eval.eval --as-typed` to ask the same questions the way users
+    # write them.
     args = sys.argv[1:]
     repeat_count = 1
     if "--repeat" in args:
         at = args.index("--repeat")
         repeat_count = int(args[at + 1])
         args = args[:at] + args[at + 2 :]
-    main(args or None, repeat_count)
+    typed = "--as-typed" in args
+    args = [a for a in args if a != "--as-typed"]
+    main(args or None, repeat_count, typed)

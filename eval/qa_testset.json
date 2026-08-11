@@ -3,6 +3,7 @@
     "id": "football-1",
     "type": "factoid",
     "question": "מי ניצח בגמר ליגת האלופות 2022?",
+    "as_typed": "מי לקח את הגמר של צמפיונס ליג 2022",
     "expected_sport": "football",
     "expected_keywords": ["Real Madrid"],
     "reference_answer": "ריאל מדריד, שניצחה 1–0 את ליברפול."
@@ -11,6 +12,7 @@
     "id": "football-2",
     "type": "factoid",
     "question": "היכן נערך גמר ליגת האלופות 2023?",
+    "as_typed": "איפה היה גמר ליגת האלופות 2023",
     "expected_sport": "football",
     "expected_keywords": ["Atatürk"],
     "reference_answer": "באצטדיון האולימפי אטאטורק באיסטנבול."
@@ -19,6 +21,7 @@
     "id": "football-3",
     "type": "factoid",
     "question": "מי היה השופט בגמר ליגת האלופות 2024?",
+    "as_typed": "מי שפט את גמר הצמפיונס 2024",
     "expected_sport": "football",
     "expected_keywords": ["Vinčić"],
     "reference_answer": "סלבקו וינצ'יץ' מסלובניה."
@@ -27,6 +30,7 @@
     "id": "football-4",
     "type": "factoid",
     "question": "מה הייתה התוצאה הסופית בגמר ליגת האלופות 2025?",
+    "as_typed": "מה התוצאה בגמר ליגת האלופות 2025",
     "expected_sport": "football",
     "expected_keywords": ["Paris Saint-Germain", "Inter Milan"],
     "reference_answer": "פריז סן ז'רמן ניצחה 5–0 את אינטר מילאן."
@@ -35,6 +39,7 @@
     "id": "football-5",
     "type": "factoid",
     "question": "מי ניצח בעונשין בגמר ליגת האלופות 2026?",
+    "as_typed": "מי ניצח בפנדלים בגמר ליגת האלופות 2026",
     "expected_sport": "football",
     "expected_keywords": ["Penalty shootout"],
     "reference_answer": "פריז סן ז'רמן ניצחה 4–3 בדו-קרב הפנדלים מול ארסנל, אחרי 1–1 בתום ההארכה."
@@ -43,6 +48,7 @@
     "id": "basketball-1",
     "type": "factoid",
     "question": "איזו קבוצה ניצחה באליפות ה-NBA ב-2022?",
+    "as_typed": "מי לקח את האליפות בNBA ב2022",
     "expected_sport": "basketball",
     "expected_keywords": ["Golden State Warriors"],
     "reference_answer": "גולדן סטייט ווריורס, שניצחה את בוסטון סלטיקס 4–2 בסדרה."
@@ -51,6 +57,7 @@
     "id": "basketball-2",
     "type": "factoid",
     "question": "מי נבחר לשחקן ה-MVP בגמר ה-NBA 2023?",
+    "as_typed": "מי היה MVP גמר NBA 2023",
     "expected_sport": "basketball",
     "expected_keywords": ["Jokić"],
     "reference_answer": "ניקולה יוקיץ' מדנוור נאגטס."
@@ -59,6 +66,7 @@
     "id": "basketball-3",
     "type": "factoid",
     "question": "מי היה המאמן הראשי של הקבוצה המנצחת בגמר ה-NBA 2024?",
+    "as_typed": "מי אימן את האלופה בNBA ב2024",
     "expected_sport": "basketball",
     "expected_keywords": ["Joe Mazzulla"],
     "reference_answer": "ג'ו מזולה, מאמן בוסטון סלטיקס."
@@ -67,6 +75,7 @@
     "id": "basketball-4",
     "type": "factoid",
     "question": "מה הייתה תוצאת הסדרה בגמר ה-NBA 2025?",
+    "as_typed": "מה היתה תוצאת הסדרה בגמר NBA 2025",
     "expected_sport": "basketball",
     "expected_keywords": ["Oklahoma City Thunder"],
     "reference_answer": "אוקלהומה סיטי ת'אנדר ניצחה את אינדיאנה פייסרס 4–3."
@@ -75,6 +84,7 @@
     "id": "basketball-5",
     "type": "factoid",
     "question": "היכן נערך גמר ה-NBA 2026?",
+    "as_typed": "איפה נערך גמר NBA 2026",
     "expected_sport": "basketball",
     "expected_keywords": ["San Antonio"],
     "reference_answer": "המשחק הסוגר נערך בפרוסט בנק סנטר בסן אנטוניו, טקסס."
@@ -84,6 +94,7 @@
     "id": "aggregate-football-1",
     "type": "aggregate",
     "question": "כמה פעמים ריאל מדריד זכתה בליגת האלופות בשנים 2022 עד 2026?",
+    "as_typed": "כמה פעמים ריאל מדריד זכתה בליגת האלופות ב5 השנים האחרונות",
     "expected_sport": "football",
     "expected_keywords": [
       "Liverpool 0–1 Real Madrid",
@@ -95,6 +106,7 @@
     "id": "aggregate-football-2",
     "type": "aggregate",
     "question": "באיזה גמר ליגת אלופות בין 2022 ל-2026 נרשם הפרש השערים הגדול ביותר?",
+    "as_typed": "באיזה גמר ליגת אלופות היה הפרש השערים הכי גדול",
     "expected_sport": "football",
     "expected_keywords": [
       "Liverpool 0–1 Real Madrid",
@@ -109,6 +121,7 @@
     "id": "aggregate-football-3",
     "type": "aggregate",
     "question": "באיזה גמר ליגת אלופות היה מספר הצופים הגדול ביותר, וכמה צופים היו בו?",
+    "as_typed": "באיזה גמר ליגת אלופות היו הכי הרבה צופים",
     "expected_sport": "football",
     "expected_keywords": [
       "Attendance: 75,000",
@@ -123,6 +136,7 @@
     "id": "aggregate-football-4",
     "type": "comparison",
     "question": "אילו קבוצות הופיעו ביותר מגמר ליגת אלופות אחד בין 2022 ל-2026?",
+    "as_typed": "אילו קבוצות הגיעו ליותר מגמר אחד בליגת האלופות",
     "expected_sport": "football",
     "expected_keywords": [
       "Liverpool 0–1 Real Madrid",
@@ -137,6 +151,7 @@
     "id": "aggregate-basketball-1",
     "type": "aggregate",
     "question": "איזה שחקן קלע הכי הרבה נקודות במשחק סוגר של גמר ה-NBA בשנים 2022 עד 2026?",
+    "as_typed": "מי קלע הכי הרבה נקודות במשחק גמר NBA",
     "expected_sport": "basketball",
     "expected_keywords": [
       "Jalen Brunson (Starter): 45 pts",
@@ -151,6 +166,7 @@
     "id": "aggregate-basketball-2",
     "type": "aggregate",
     "question": "כמה נקודות בסך הכול קלע ג'יילן בראון במשחקי הסיום של גמרי ה-NBA בין 2022 ל-2026?",
+    "as_typed": "כמה נקודות קלע גיילן בראון בגמרים",
     "expected_sport": "basketball",
     "expected_keywords": [
       "Jaylen Brown (Starter): 34 pts",
@@ -162,6 +178,7 @@
     "id": "aggregate-basketball-3",
     "type": "aggregate",
     "question": "איזו סדרת גמר NBA בין 2022 ל-2026 הוכרעה רק במשחק השביעי?",
+    "as_typed": "איזה גמר NBA הוכרע במשחק שביעי",
     "expected_sport": "basketball",
     "expected_keywords": [
       "Oklahoma City Thunder won 4–3 over Indiana Pacers"
@@ -172,6 +189,7 @@
     "id": "aggregate-basketball-4",
     "type": "aggregate",
     "question": "באיזה משחק סוגר של גמר NBA היה הפרש הנקודות הגדול ביותר?",
+    "as_typed": "באיזה גמר NBA היה ההפרש הכי גדול במשחק האחרון",
     "expected_sport": "basketball",
     "expected_keywords": [
       "Golden State Warriors 103 – Boston Celtics 90",
@@ -186,6 +204,7 @@
     "id": "cross-sport-1",
     "type": "comparison",
     "question": "מי זכה בגמר ליגת האלופות ומי זכה בגמר ה-NBA ב-2024?",
+    "as_typed": "מי זכה בליגת האלופות ומי זכה בNBA ב2024",
     "expected_sport": null,
     "expected_keywords": [
       "Borussia Dortmund 0–2 Real Madrid",
@@ -197,6 +216,7 @@
     "id": "multihop-1",
     "type": "multihop",
     "question": "מי אימן את אלופת ה-NBA באותן שנים שבהן ריאל מדריד זכתה בליגת האלופות?",
+    "as_typed": "מי אימן את אלופת הNBA בשנים שריאל מדריד לקחה את הצמפיונס",
     "expected_sport": null,
     "expected_keywords": [
       "Liverpool 0–1 Real Madrid",
@@ -211,6 +231,7 @@
     "id": "existence-barcelona",
     "type": "existence",
     "question": "האם ברצלונה זכתה באליפות ב-5 השנים האחרונות?",
+    "as_typed": "האם ברצלונה זכתה באליפות ב5 השנים האחרונות",
     "expected_sport": "football",
     "expected_keywords": [
       "Liverpool 0–1 Real Madrid",
@@ -222,6 +243,7 @@
     "id": "existence-barcelona-negated",
     "type": "existence",
     "question": "האם ברצלונה לא זכתה באליפות ב-5 השנים האחרונות?",
+    "as_typed": "האם ברצלונה לא זכתה באליפות ב5 השנים האחרונות",
     "expected_sport": "football",
     "expected_keywords": [
       "Liverpool 0–1 Real Madrid",
@@ -233,6 +255,7 @@
     "id": "existence-porto",
     "type": "existence",
     "question": "האם פורטו זכתה בגמר ליגת האלופות?",
+    "as_typed": "האם פורטו זכתה בגמר ליגת האלופות",
     "expected_sport": "football",
     "expected_keywords": [
       "Manchester City 1–0 Inter Milan",
@@ -244,6 +267,7 @@
     "id": "existence-brown-in-ucl",
     "type": "existence",
     "question": "האם ג'יילן בראון זכה בגמר ליגת האלופות?",
+    "as_typed": "האם גיילן בראון זכה בגמר ליגת האלופות",
     "expected_sport": "football",
     "expected_keywords": [
       "Manchester City 1–0 Inter Milan",
@@ -255,6 +279,7 @@
     "id": "player-title-brown",
     "type": "existence",
     "question": "האם ג'יילן בראון זכה?",
+    "as_typed": "האם גיילן בראון זכה",
     "expected_sport": "basketball",
     "expected_keywords": [
       "Boston Celtics won 4–1 over Dallas Mavericks",
@@ -266,6 +291,7 @@
     "id": "player-title-tatum",
     "type": "existence",
     "question": "האם ג'ייסון טייטם זכה?",
+    "as_typed": "האם גייסון טייטם זכה",
     "expected_sport": "basketball",
     "expected_keywords": [
       "Boston Celtics won 4–1 over Dallas Mavericks",
@@ -277,6 +303,7 @@
     "id": "scope-curry-titles",
     "type": "existence",
     "question": "האם סטף קרי זכה ביותר מאליפות אחת?",
+    "as_typed": "האם סטף קרי זכה ביותר מאליפות אחת",
     "expected_sport": "basketball",
     "expected_keywords": [
       "Golden State Warriors won 4–2 over Boston Celtics",
@@ -288,6 +315,7 @@
     "id": "shape-short-series",
     "type": "aggregate",
     "question": "איזה גמר NBA נגמר בשישה משחקים או פחות?",
+    "as_typed": "איזה גמר נגמר בשישה משחקים או פחות",
     "expected_sport": "basketball",
     "expected_keywords": [
       "Golden State Warriors won 4–2 over Boston Celtics",
@@ -301,6 +329,7 @@
     "id": "uncovered-brown-average",
     "type": "uncovered",
     "question": "מה היה ממוצע הנקודות של ג'יילן בראון בשנה שבה זכה באליפות?",
+    "as_typed": "מה היה ממוצע הנקודות של גיילן בראון בשנה שבה לקח אליפות",
     "expected_sport": "basketball",
     "expected_keywords": ["Jaylen Brown"],
     "reference_answer": "הקורפוס מכסה רק את משחק ההכרעה של כל סדרה, ולכן ממוצע לסדרה שלמה אינו זמין. במשחק ההכרעה של גמר 2024, שבו בוסטון זכתה, בראון קלע 21 נקודות."
@@ -309,6 +338,7 @@
     "id": "multihop-boston-loss",
     "type": "multihop",
     "question": "בשנים שבוסטון הפסידו באליפות מי זכתה בליגת האלופות?",
+    "as_typed": "בשנים שבוסטון הפסידו באליפות מי זכתה בליגת האלופות",
     "expected_sport": null,
     "expected_keywords": [
       "Golden State Warriors won 4–2 over Boston Celtics",
@@ -320,6 +350,7 @@
     "id": "multihop-boston-loss-reworded",
     "type": "multihop",
     "question": "מי זכתה בליגת האלופות בשנים שבוסטון הפסידו באליפות?",
+    "as_typed": "מי זכתה בליגת האלופות בשנים שבוסטון הפסידו באליפות",
     "expected_sport": null,
     "expected_keywords": [
       "Golden State Warriors won 4–2 over Boston Celtics",
