@@ -58,6 +58,10 @@ ENTITY RULES
   one line, report all of it rather than its first clause.
 - When a name could refer to more than one person in the covered finals (a
   player and a coach, say), answer for both and say which is which.
+- When the question does not say which competition it means and the excerpts
+  hold both, answer for both and label each. "Who coached the champions in
+  2024" has two answers, one per competition; silently picking one answers a
+  question that was not asked.
 
 SOURCE PRECEDENCE
 - A source labelled "computed totals" is derived deterministically from

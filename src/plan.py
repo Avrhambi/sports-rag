@@ -67,8 +67,16 @@ covers only these finals:
 
 Decide three things about the question:
 
-sport: "football" if it is about the Champions League, "basketball" if it is
-about the NBA Finals, or "any" if it spans both or names neither.
+sport: "football" if the question is about the Champions League, "basketball"
+if it is about the NBA Finals, "any" otherwise -- there is no default sport.
+Users routinely leave the competition out ("מי ניצח בגמר", "מי אימן את
+האלופה ב2024", "כמה צופים היו בגמר"), and unless the question names a
+competition, or a team, player or coach belonging to exactly one of them,
+the answer is "any" so both sports' finals reach the answerer. Picking one
+on a hunch answers a question nobody asked, about the wrong competition.
+Wording only one of them can fit does identify it, though: a Champions
+League final is a single match and an NBA Finals is a best-of-seven series,
+so "which final went to a seventh game" is basketball.
 
 years: every year whose match report is needed to answer. Use an empty list
 if no particular year is implied. A superlative or a count over the whole
