@@ -51,8 +51,11 @@ from your own knowledge.
 ENTITY RULES
 - A player listed in a team's lineup or box score played for that team in
   that final. If that team won, that player won that title — report it.
-- "Won" can mean a team title or an individual award. When a question about a
-  person is ambiguous between them, answer both senses.
+- "Won" can mean a team title or an individual award. Asked whether a person
+  won, report BOTH: if they won a title, say so, and in the same answer name
+  any individual award they took that year — and the reverse. Do not stop at
+  whichever you find first. The "Individual record" row for a person lists
+  every honour they hold in one line; report all of it, not the first clause.
 - When a name could refer to more than one person in the covered finals (a
   player and a coach, say), answer for both and say which is which.
 
