@@ -45,6 +45,33 @@ def _reset_rotation(monkeypatch):
     monkeypatch.setattr(gemini, "_current_key", 0)
 
 
+def test_sampling_is_off_unless_a_caller_overrides_it(monkeypatch):
+    """Left at the API default, the same question over the same context came
+    back both "Tatum won 2024" and "Tatum never won" on different runs, and
+    single-run eval results were reporting that noise as signal."""
+    seen: list[dict] = []
+
+    def factory(api_key: str):
+        models = type("M", (), {
+            "generate_content": lambda self, model, contents, config=None: (
+                seen.append(config) or "ok"
+            )
+        })()
+        return type("Client", (), {"models": models})()
+
+    monkeypatch.setattr(gemini, "GEMINI_API_KEYS", ["k1"])
+    monkeypatch.setattr(gemini.genai, "Client", factory)
+
+    gemini.generate_content("q")
+    assert seen[-1]["temperature"] == 0
+
+    # A caller's own config survives, and can still override the default.
+    gemini.generate_content("q", config={"response_mime_type": "application/json"})
+    assert seen[-1] == {"temperature": 0, "response_mime_type": "application/json"}
+    gemini.generate_content("q", config={"temperature": 0.7})
+    assert seen[-1]["temperature"] == 0.7
+
+
 def test_an_exhausted_key_rotates_to_the_next(monkeypatch):
     """A daily quota is per key, so a second key is the difference between a
     run finishing and a run silently dropping its hardest questions."""

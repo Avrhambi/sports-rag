@@ -43,7 +43,16 @@ def generate_content(contents: Any, config: dict | None = None, model: str = GEM
 
     Only quota errors rotate; anything else is a real failure and is raised
     unchanged rather than retried against every key in turn.
+
+    Sampling is off by default. Nothing here wants a creative answer: the
+    task is to read a fact out of a supplied context, and the eval judge is
+    scoring whether that happened. Left at the API default, the same question
+    over the same context returned "Jayson Tatum won 2024" and "Jayson Tatum
+    did not win any title" on different runs -- so a one-run measurement was
+    reporting sampling noise, and three rounds of chasing that as if it were
+    a prompt problem produced two fixes that only appeared to work.
     """
+    config = {"temperature": 0, **(config or {})}
     if not GEMINI_API_KEYS:
         raise RuntimeError(
             "No Gemini API key configured. Copy .env.example to .env and set GEMINI_API_KEY_1."
