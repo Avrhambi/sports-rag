@@ -80,8 +80,16 @@ TYPE_ORDER = ["factoid", "existence", "aggregate", "comparison", "multihop", "un
 ANSWERABLE_TYPES = [t for t in TYPE_ORDER if t != "uncovered"]
 
 
-def load_testset() -> list[dict]:
-    return json.loads(TESTSET_PATH.read_text(encoding="utf-8"))
+def load_testset(only: list[str] | None = None) -> list[dict]:
+    """The whole set, or just the questions whose id contains one of `only`.
+
+    A full run costs ~3 calls per question and the free tier allows 500 a
+    day, so re-checking the handful that failed has to be possible without
+    spending a run's worth of quota on the ones that already pass."""
+    testset = json.loads(TESTSET_PATH.read_text(encoding="utf-8"))
+    if not only:
+        return testset
+    return [item for item in testset if any(fragment in item["id"] for fragment in only)]
 
 
 def score_retrieval(item: dict, top_k: int = 4) -> dict:
@@ -154,8 +162,10 @@ def mean(values: list[float]) -> float:
     return sum(values) / len(values) if values else 0.0
 
 
-def main() -> None:
-    testset = load_testset()
+def main(only: list[str] | None = None) -> None:
+    testset = load_testset(only)
+    if only:
+        print(f"Running {len(testset)} of the full set, filtered by {only}.")
     # With a key set, each score_retrieval makes a planner call, so it needs
     # the same free-tier pacing as the judging loop below.
     retrieval_results = []
@@ -225,4 +235,7 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    import sys
+
+    # e.g. `python -m eval.eval multihop existence` to re-check two types.
+    main(sys.argv[1:] or None)
