@@ -26,6 +26,7 @@ BASKETBALL_FINALS = [
     {
         "sport": "basketball", "year": 2022, "champion": "Golden State Warriors",
         "runnerup": "Boston Celtics", "series_score": "4-2", "games_played": 6,
+        "winner": "Golden State Warriors", "loser": "Boston Celtics",
         "mvp": "Stephen Curry",
         "deciding_game": {
             "home_team": "Boston Celtics", "away_team": "Golden State Warriors",
@@ -39,6 +40,7 @@ BASKETBALL_FINALS = [
     {
         "sport": "basketball", "year": 2024, "champion": "Boston Celtics",
         "runnerup": "Dallas Mavericks", "series_score": "4-1", "games_played": 5,
+        "winner": "Boston Celtics", "loser": "Dallas Mavericks",
         "mvp": "Jaylen Brown",
         "deciding_game": {
             "home_team": "Boston Celtics", "away_team": "Dallas Mavericks",
@@ -184,6 +186,27 @@ def test_basketball_block_pre_joins_series_length_with_the_teams():
     """The bare "2022 (4-2)" list left the champion out of the answer."""
     block = "\n".join(basketball_block(BASKETBALL_FINALS))
     assert "- 2022: 6 games — Golden State Warriors beat Boston Celtics 4-2" in block
+
+
+def test_individual_record_is_keyed_by_person_not_by_year():
+    """Pre-joining has to run in the direction the question asks. With only a
+    per-year squad list, "did Jayson Tatum win?" was answered "no" -- the
+    model scanned the MVP column rather than a comma-separated roster."""
+    finals = [
+        {**BASKETBALL_FINALS[0], "mvp": "Stephen Curry", "people": [
+            {"name": "Stephen Curry", "team": "Golden State Warriors", "role": "player", "team_result": "won"},
+            {"name": "Jayson Tatum", "team": "Boston Celtics", "role": "player", "team_result": "lost"},
+        ]},
+        {**BASKETBALL_FINALS[1], "mvp": "Jaylen Brown", "people": [
+            {"name": "Jayson Tatum", "team": "Boston Celtics", "role": "player", "team_result": "won"},
+            {"name": "Jaylen Brown", "team": "Boston Celtics", "role": "player", "team_result": "won"},
+        ]},
+    ]
+    block = "\n".join(basketball_block(finals))
+    assert "- Jayson Tatum (player): won 2024 with Boston Celtics; lost 2022 with Boston Celtics" in block
+    # Both senses of "won" on one row, so answering both is a read.
+    assert "- Jaylen Brown (player): won 2024 with Boston Celtics; Finals MVP 2024" in block
+    assert "did not take part in any of these finals" in block
 
 
 def test_basketball_block_lists_every_scorer_not_a_top_five():

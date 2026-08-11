@@ -72,6 +72,48 @@ def _distinctness(finals: list[dict], key: str, noun: str) -> str:
     return f"{noun}: all {len(counts)} distinct — none appears more than once, so there is no maximum"
 
 
+def _individual_honours(finals: list[dict]) -> list[str]:
+    """One row per person, keyed by the person.
+
+    Pre-joining is not enough on its own -- it has to be pre-joined in the
+    direction the question asks. A per-year squad list answers "who was in the
+    2024 squad"; asked "did Jayson Tatum win", the model scanned for the most
+    answer-shaped row it could find, hit the MVP column, and returned a
+    confident "no" while his name sat inside a comma-separated squad a few
+    lines above. Keying by person makes that question a lookup.
+    """
+    honours: defaultdict[str, dict] = defaultdict(lambda: {"titles": [], "lost": [], "mvp": [], "roles": set()})
+    for final in finals:
+        for person in final.get("people", []):
+            record = honours[person["name"]]
+            record["roles"].add(person["role"])
+            bucket = "titles" if person["team_result"] == "won" else "lost"
+            record[bucket].append((final["year"], person["team"]))
+        if final.get("mvp"):
+            honours[final["mvp"]]["mvp"].append(final["year"])
+
+    if not honours:
+        return []
+
+    header = (
+        "Individual record (one row per person; a person absent from this list "
+        "did not take part in any of these finals):"
+    )
+    lines = [header]
+    for name in sorted(honours):
+        record = honours[name]
+        parts = []
+        if record["titles"]:
+            parts.append("won " + ", ".join(f"{y} with {t}" for y, t in sorted(record["titles"])))
+        if record["lost"]:
+            parts.append("lost " + ", ".join(f"{y} with {t}" for y, t in sorted(record["lost"])))
+        if record["mvp"]:
+            parts.append("Finals MVP " + ", ".join(str(y) for y in sorted(record["mvp"])))
+        role = "/".join(sorted(record["roles"])) or "player"
+        lines.append(f"- {name} ({role}): {'; '.join(parts) if parts else 'no recorded result'}")
+    return lines
+
+
 def _winning_squads(finals: list[dict]) -> list[str]:
     """Every person on a winning side, listed under their year. Answers "did
     this player win?" by reading rather than by joining a roster chunk to a
@@ -141,6 +183,8 @@ def football_block(finals: list[dict]) -> list[str]:
     lines.append(_distinctness(finals, "venue", "Venues"))
     lines.append("")
     lines += _winning_squads(finals)
+    lines.append("")
+    lines += _individual_honours(finals)
     return lines
 
 
@@ -232,6 +276,8 @@ def basketball_block(finals: list[dict]) -> list[str]:
 
     lines.append("")
     lines += _winning_squads(finals)
+    lines.append("")
+    lines += _individual_honours(finals)
     return lines
 
 
