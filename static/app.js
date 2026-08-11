@@ -50,23 +50,12 @@
   // the prompt asking for plain prose, and textContent rendered the asterisks
   // literally. Handle the two forms that actually show up -- leading bullets
   // and **bold** -- as structure, and escape everything else.
-  function renderAnswer(answer, degraded, sportOverride) {
+  function renderAnswer(answer, degraded, offTabSport) {
     const escape = (s) =>
       s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     const inline = (s) => escape(s).replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
 
     answerText.innerHTML = "";
-    // The tab stays where the last question left it, so it regularly
-    // contradicts the new question. The question wins -- but silently
-    // ignoring the tab is as confusing as silently obeying it.
-    if (sportOverride) {
-      const notice = document.createElement("p");
-      notice.className = "answer-line answer-degraded";
-      notice.textContent =
-        `השאלה היא על ${SPORT_LABELS[sportOverride] ?? sportOverride}, ולכן ענינו מנתוני ` +
-        `${SPORT_LABELS[sportOverride] ?? sportOverride} ולא מהלשונית שנבחרה.`;
-      answerText.appendChild(notice);
-    }
     if (degraded) {
       const notice = document.createElement("p");
       notice.className = "answer-line answer-degraded";
@@ -85,6 +74,22 @@
       p.className = bullet ? "answer-line answer-bullet" : "answer-line";
       p.innerHTML = inline(bullet ? bullet[1] : line);
       answerText.appendChild(p);
+    }
+
+    // The answer already explains that the tab, not the corpus, is why there
+    // is nothing to report. Being told to switch tabs and then having to do
+    // it by hand is the part that would still cost the user the question.
+    if (offTabSport) {
+      const action = document.createElement("button");
+      action.type = "button";
+      action.className = "switch-sport-btn";
+      action.textContent = `עברו ללשונית ${SPORT_LABELS[offTabSport] ?? offTabSport} ושאלו שוב`;
+      action.addEventListener("click", () => {
+        setSport(offTabSport);
+        const question = questionInput.value.trim();
+        if (question) askQuestion(question);
+      });
+      answerText.appendChild(action);
     }
   }
 
@@ -137,7 +142,7 @@
       }
 
       const data = await response.json();
-      renderAnswer(data.answer, data.degraded, data.sport_override);
+      renderAnswer(data.answer, data.degraded, data.off_tab_sport);
       answerSection.hidden = false;
       renderSources(data.sources);
     } catch (err) {

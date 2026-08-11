@@ -54,6 +54,12 @@ NBA_FINALS_YEARS = [2022, 2023, 2024, 2025, 2026]
 
 SPORTS = ["football", "basketball"]
 
+# Hebrew names for the two sports and their competitions. The answerer writes
+# in Hebrew, so the one answer Python writes itself -- the off-tab refusal in
+# app.py -- has to as well.
+SPORT_NAME_HE = {"football": "כדורגל", "basketball": "כדורסל"}
+COMPETITION_NAME_HE = {"football": "גמרי ליגת האלופות", "basketball": "גמרי ה-NBA"}
+
 # What the corpus contains, stated explicitly so the answerer can tell "absent
 # from a complete set" (an answer) from "outside what we hold" (a refusal).
 # `unit` is the honest part: an NBA Finals report is one game of a series, so

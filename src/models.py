@@ -26,9 +26,9 @@ class AskResponse(BaseModel):
     # drawn from a handful of chunks instead of the full set -- worth telling
     # the user rather than serving a quietly weaker answer as if it were normal.
     degraded: bool = False
-    # The sport the question is actually about, when that contradicts the tab
-    # the user had selected. Tabs are sticky and questions are not: a tab left
-    # on כדורגל from an earlier search hard-filtered an NBA question down to
-    # football chunks and returned a refusal, with nothing on screen to say
-    # the tab had caused it. The question wins, and the UI says so.
-    sport_override: str | None = None
+    # The sport the question turned out to be about, when that is not the tab
+    # the user had selected. The tab is a scope the user chose, so it stands
+    # and the question goes unanswered -- but the answer says so in as many
+    # words instead of searching the wrong sport and reporting the corpus as
+    # incomplete. The UI turns this into a one-click switch to the right tab.
+    off_tab_sport: str | None = None

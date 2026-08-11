@@ -443,6 +443,38 @@ body.sport-basketball .pitch-centerline {
   inset-inline-start: 0;
 }
 
+/* Shown only when the question is about the sport the other tab covers:
+   switches tab and re-asks, so the answer is one click away rather than a
+   tab change the user has to make and a question they have to retype. */
+.switch-sport-btn {
+  margin-top: 14px;
+  padding: 9px 16px;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--ink);
+  background: var(--whistle);
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.switch-sport-btn:hover {
+  background: var(--amber);
+}
+
+.switch-sport-btn:focus-visible {
+  outline: 3px solid var(--amber);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .switch-sport-btn {
+    transition: none;
+  }
+}
+
 /* ---------- sources: substitution-board tiles ---------- */
 
 .sources-board {

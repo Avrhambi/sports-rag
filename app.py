@@ -3,7 +3,7 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 
-from src.config import SPORTS
+from src.config import COMPETITION_NAME_HE, SPORT_NAME_HE, SPORTS
 from src.generate import generate_answer
 from src.models import AskRequest, AskResponse, SourceOut
 from src.plan import QueryPlan, plan_query
@@ -12,20 +12,31 @@ from src.retrieve import retrieve
 app = FastAPI(title="Sports Finals History RAG")
 
 
-def resolve_sport(requested: str | None, plan: QueryPlan) -> tuple[str | None, str | None]:
-    """Which sport to filter retrieval by, and which one overrode the tab.
+def off_tab_sport(requested: str | None, plan: QueryPlan) -> str | None:
+    """The sport a question is about when that is not the selected tab.
 
-    The sport tab is sticky and the question is not, so the two disagree
-    whenever someone asks about the other sport without switching tabs. The
-    tab used to win silently: an NBA question asked with כדורגל selected
-    retrieved five Champions League chunks and came back as a refusal. A
-    question that names its competition is a clearer statement of intent than
-    a tab left over from the previous search, so the question wins -- and the
-    caller gets the overridden sport to say so on screen.
+    The tab is a scope the user chose, so it is not overruled: on the כדורסל
+    tab this app answers out of the NBA Finals and nothing else. What it must
+    not do is answer anyway. Passing a football question through the
+    basketball filter used to retrieve four NBA chunks and hand them to the
+    model, which then produced a refusal phrased as missing data -- the
+    corpus looked incomplete when the tab was the whole story.
+
+    Returning the mismatched sport lets `ask` say exactly that instead, and
+    skip the generation call entirely.
     """
     if requested and plan.sport_filter and plan.sport_filter != requested:
-        return plan.sport_filter, plan.sport_filter
-    return requested, None
+        return plan.sport_filter
+    return None
+
+
+def off_tab_answer(tab: str, question_sport: str) -> str:
+    """The refusal itself: what this tab covers, what was asked, what to do."""
+    return (
+        f"בלשונית {SPORT_NAME_HE[tab]} אני עונה רק מתוך {COMPETITION_NAME_HE[tab]}, "
+        f"והשאלה הזאת היא על {SPORT_NAME_HE[question_sport]}. "
+        f"כדי לקבל תשובה, עברו ללשונית {SPORT_NAME_HE[question_sport]} או ללשונית «הכל» ושאלו שוב."
+    )
 
 
 @app.get("/api/health")
@@ -45,8 +56,20 @@ def ask(request: AskRequest) -> AskResponse:
     # counts as evidence, generation to decide whether that evidence is a
     # complete set worth counting over.
     plan = plan_query(question)
-    sport, sport_override = resolve_sport(request.sport, plan)
-    chunks = retrieve(question, sport=sport, plan=plan)
+
+    # Answer the tab mismatch instead of searching past it. This also costs
+    # one Gemini call rather than two, which matters on a free-tier quota.
+    tab = request.sport
+    mismatch = off_tab_sport(tab, plan)
+    if tab and mismatch:
+        return AskResponse(
+            answer=off_tab_answer(tab, mismatch),
+            sources=[],
+            degraded=plan.degraded,
+            off_tab_sport=mismatch,
+        )
+
+    chunks = retrieve(question, sport=request.sport, plan=plan)
     if not chunks:
         raise HTTPException(status_code=404, detail="No relevant match data found for this question.")
 
@@ -62,9 +85,7 @@ def ask(request: AskRequest) -> AskResponse:
         )
         for c in chunks
     ]
-    return AskResponse(
-        answer=answer, sources=sources, degraded=plan.degraded, sport_override=sport_override
-    )
+    return AskResponse(answer=answer, sources=sources, degraded=plan.degraded)
 
 
 app.mount("/", StaticFiles(directory="static", html=True), name="static")
