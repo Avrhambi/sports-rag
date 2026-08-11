@@ -159,10 +159,33 @@ def mean(values: list[float]) -> float:
     return sum(values) / len(values) if values else 0.0
 
 
-def main(only: list[str] | None = None) -> None:
+def score_generation_repeated(item: dict, chunks: list[dict], repeats: int) -> tuple[dict | None, list[float]]:
+    """Judge the same question `repeats` times and return the last scoring
+    plus every correctness value.
+
+    One run is not a result. The same question over a byte-identical prompt
+    has returned "Tatum won the 2024 title" and "Tatum never won" on
+    different runs -- at temperature 0, with the same plan and the same 32k
+    of context. Answers are stable within a few minutes and differ across
+    longer gaps, so a single sample reports whichever attractor the backend
+    happened to be in, and three separate "fixes" were assessed against it.
+    """
+    scores: list[float] = []
+    last: dict | None = None
+    for _ in range(repeats):
+        result = score_generation(item, chunks)
+        if result:
+            last = result
+            scores.append(result.get("correctness", 0))
+    return last, scores
+
+
+def main(only: list[str] | None = None, repeats: int = 1) -> None:
     testset = load_testset(only)
     if only:
         print(f"Running {len(testset)} of the full set, filtered by {only}.")
+    if repeats > 1:
+        print(f"Judging each question {repeats} times to measure run-to-run variance.")
     # With a key set, each score_retrieval makes a planner call, so it needs
     # the same free-tier pacing as the judging loop below.
     retrieval_results = []
@@ -185,8 +208,11 @@ def main(only: list[str] | None = None) -> None:
 
     print(f"Judging {n} generated answers with Gemini (paced for free-tier rate limits, this takes a few minutes)...")
     generation_results = []
+    repeated_scores: list[list[float]] = []
     for item, r in zip(testset, retrieval_results):
-        generation_results.append(score_generation(item, r["chunks"]))
+        result, scores = score_generation_repeated(item, r["chunks"], repeats)
+        generation_results.append(result)
+        repeated_scores.append(scores)
 
     judged = [g for g in generation_results if g]
     skipped = n - len(judged)
@@ -233,6 +259,20 @@ def main(only: list[str] | None = None) -> None:
                 f"than a flat refusal: {1 - mean(uncovered):.0%} ({len(uncovered)} questions)"
             )
 
+        # A question that scores 1.00 on some runs and 0.00 on others is the
+        # most misleading thing this eval can report, because either number
+        # alone looks like a verdict. Name them.
+        if repeats > 1:
+            unstable = [
+                (item["id"], scores)
+                for item, scores in zip(testset, repeated_scores)
+                if scores and len(set(scores)) > 1
+            ]
+            stable_pass = sum(1 for s in repeated_scores if s and set(s) == {1.0})
+            print(f"Generation - questions correct on every one of {repeats} runs: {stable_pass}/{n}")
+            for qid, scores in unstable:
+                print(f"  UNSTABLE {qid}: {[f'{s:.1f}' for s in scores]}")
+
         # Name the questions that dragged a type's mean down -- without this
         # a regression shows up as a decimal with no way to chase it.
         weak = [(i, g) for i, g in zip(testset, generation_results) if g and g.get("correctness", 0) < 1]
@@ -243,5 +283,12 @@ def main(only: list[str] | None = None) -> None:
 if __name__ == "__main__":
     import sys
 
-    # e.g. `python -m eval.eval multihop existence` to re-check two types.
-    main(sys.argv[1:] or None)
+    # e.g. `python -m eval.eval multihop existence` to re-check two types,
+    # or `python -m eval.eval --repeat 3 player-title` to measure variance.
+    args = sys.argv[1:]
+    repeat_count = 1
+    if "--repeat" in args:
+        at = args.index("--repeat")
+        repeat_count = int(args[at + 1])
+        args = args[:at] + args[at + 2 :]
+    main(args or None, repeat_count)
