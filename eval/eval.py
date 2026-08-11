@@ -220,9 +220,18 @@ def main(only: list[str] | None = None) -> None:
             if refused:
                 print(f"  refused: {', '.join(refused)}")
 
+        # `uncovered` questions are NOT scored on abstention. The right answer
+        # to "what was his series average" is not a refusal: it names the
+        # coverage limit and then gives the closest fact held -- which the
+        # reference does, so `correctness` already measures it. An earlier
+        # version reported "correct abstention: 0%" for an answer that scored
+        # correctness 1.00, which said more about the metric than the system.
         uncovered = [g.get("abstained", 0) for item, g in zip(testset, generation_results) if g and item["type"] == "uncovered"]
         if uncovered:
-            print(f"Generation - correct abstention on uncovered questions: {mean(uncovered):.0%} ({len(uncovered)} questions)")
+            print(
+                f"Generation - uncovered questions answered with their coverage limit rather "
+                f"than a flat refusal: {1 - mean(uncovered):.0%} ({len(uncovered)} questions)"
+            )
 
         # Name the questions that dragged a type's mean down -- without this
         # a regression shows up as a decimal with no way to chase it.
