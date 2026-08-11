@@ -48,6 +48,19 @@ python -m eval.eval --as-typed   # the same questions, phrased the way users typ
 
 ## Architecture notes
 
+- **The Gemini model is part of the system, not a swappable backend.** Both
+  the planner and the answerer are Gemini calls, so changing
+  `GEMINI_MODEL_NAME` changes behaviour and retires the eval numbers. This
+  system targets `gemini-3.1-flash-lite`, which scores 1.00 correctness on
+  all 33 as-typed questions. `gemini-3.5-flash-lite` was tried and rejected:
+  0.94, with two regressions 3.1 does not have — its planner stopped
+  expanding a bare "מי ניצח בגמר" to every covered year (dropping retrieval
+  to an arbitrary top-4), and it reported Boston as losing the 2024 NBA
+  Finals, which Boston won, in five runs out of six. `eval.eval` prints the
+  model at the top of every run so no result is ever compared across models
+  by accident. Work parked from that experiment lives on the branch
+  `robustness/model-agnostic-joins`, unvalidated on 3.1 and unmerged.
+
 - Embedding model is `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2`
   (local, multilingual, 384-dim) — the same model embeds both the Hebrew query
   and the English source chunks into one shared space, so there is no

@@ -17,6 +17,16 @@ CHUNKS_PATH = DATA_DIR / "chunks.json"
 FACTS_PATH = DATA_DIR / "facts.json"
 
 EMBEDDING_MODEL_NAME = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+
+# The model this system is built and measured against. Both the planner and
+# the answerer are Gemini calls, so this is not a swappable backend: changing
+# it changes what the system does, and the eval numbers stop applying.
+# Measured on the as-typed set: 3.1-flash-lite scored 1.00 correctness across
+# all 33 questions; 3.5-flash-lite scored 0.94 and broke two things 3.1 never
+# got wrong -- its planner stopped expanding a bare "who won the final" to
+# every covered year, and it insisted a team lost the final it had won. Treat
+# a change here as a change to the system, and re-run `python -m eval.eval
+# --as-typed` before keeping it.
 GEMINI_MODEL_NAME = "gemini-3.1-flash-lite"
 
 def _gemini_keys() -> list[str]:

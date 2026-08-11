@@ -34,6 +34,7 @@ from collections import defaultdict
 from pathlib import Path
 
 from src import gemini
+from src.config import GEMINI_MODEL_NAME
 from src.generate import generate_answer
 from src.plan import plan_query
 from src.retrieve import retrieve
@@ -205,6 +206,13 @@ def score_generation_repeated(item: dict, chunks: list[dict], repeats: int) -> t
 
 def main(only: list[str] | None = None, repeats: int = 1, as_typed: bool = False) -> None:
     testset = load_testset(only, as_typed)
+    # Every score below belongs to one model. Both the planner and the
+    # answerer are Gemini calls, so a different model is a different system:
+    # swapping 3.1-flash-lite for 3.5 moved as-typed correctness from 1.00 to
+    # 0.94 and broke two things 3.1 never got wrong. A run that does not name
+    # its model invites the next comparison against a baseline it cannot be
+    # compared to.
+    print(f"Model: {GEMINI_MODEL_NAME}")
     if as_typed:
         print("Asking each question the way a user actually types it (--as-typed).")
     if only:
