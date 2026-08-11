@@ -349,7 +349,7 @@ def build_facts(year: int, match: dict) -> dict:
     }
 
 
-def render_markdown(year: int, match: dict) -> str:
+def render_markdown(year: int, match: dict, facts: dict | None = None) -> str:
     lines = [f"# {year} UEFA Champions League Final (Football / Soccer)", ""]
     lines += ["## Match Info"]
     lines += [
@@ -361,6 +361,12 @@ def render_markdown(year: int, match: dict) -> str:
         f"- Result: {match['team1']} {match['score']} {match['team2']}"
         + (" (after extra time)" if match["after_extra_time"] else ""),
     ]
+    # The Result line above is team1-first, which is true but has to be
+    # re-ordered by anyone naming the winner first -- and that re-ordering is
+    # where scorelines came out backwards. State the oriented form outright so
+    # the prose carries it too, not just the computed block.
+    if facts and facts.get("score_winner_first"):
+        lines.append(f"- Winner: {facts['winner']} — {facts['score_winner_first']}")
     if match["penalty_score"]:
         lines.append(f"- Penalty shootout: {match['team1']} {match['penalty_score']} {match['team2']}")
     lines.append("")
@@ -418,14 +424,15 @@ def build_football_docs() -> list[dict]:
         try:
             wikitext = fetch_wikitext(title)
             match = parse_final(wikitext)
-            markdown = render_markdown(year, match)
+            facts = build_facts(year, match)
+            markdown = render_markdown(year, match, facts)
         except Exception as exc:  # noqa: BLE001 - one bad year shouldn't kill the whole ingest
             print(f"[ingest_football] skipping {title}: {exc}")
             continue
         docs.append(
             {
                 "markdown": markdown,
-                "facts": build_facts(year, match),
+                "facts": facts,
                 "sport": "football",
                 "competition": "UEFA Champions League",
                 "season": match["season"] or str(year),

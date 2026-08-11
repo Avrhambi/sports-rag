@@ -20,3 +20,9 @@ class SourceOut(BaseModel):
 class AskResponse(BaseModel):
     answer: str
     sources: list[SourceOut]
+    # True when the query planner was unavailable and a frozen keyword
+    # fallback stood in. That path treats every question as a single-fact
+    # lookup, so counts, comparisons and "did X ever happen" answers are
+    # drawn from a handful of chunks instead of the full set -- worth telling
+    # the user rather than serving a quietly weaker answer as if it were normal.
+    degraded: bool = False

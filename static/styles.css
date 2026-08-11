@@ -424,6 +424,14 @@ body.sport-basketball .pitch-centerline {
   margin-bottom: 0;
 }
 
+.answer-degraded {
+  padding: 8px 12px;
+  margin-bottom: 14px;
+  font-size: 0.92rem;
+  border-inline-start: 4px solid var(--ink);
+  background: rgba(0, 0, 0, 0.05);
+}
+
 .answer-bullet {
   padding-inline-start: 1.1em;
   position: relative;

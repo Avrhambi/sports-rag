@@ -50,12 +50,20 @@
   // the prompt asking for plain prose, and textContent rendered the asterisks
   // literally. Handle the two forms that actually show up -- leading bullets
   // and **bold** -- as structure, and escape everything else.
-  function renderAnswer(answer) {
+  function renderAnswer(answer, degraded) {
     const escape = (s) =>
       s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     const inline = (s) => escape(s).replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
 
     answerText.innerHTML = "";
+    if (degraded) {
+      const notice = document.createElement("p");
+      notice.className = "answer-line answer-degraded";
+      notice.textContent =
+        "שירות ניתוח השאלה אינו זמין כרגע, לכן התשובה מבוססת על חיפוש מצומצם. " +
+        "שאלות על ספירה, השוואה או «האם אי פעם» עלולות להיות חלקיות.";
+      answerText.appendChild(notice);
+    }
     for (const raw of answer.split("\n")) {
       const line = raw.trim();
       if (!line) continue;
@@ -118,7 +126,7 @@
       }
 
       const data = await response.json();
-      renderAnswer(data.answer);
+      renderAnswer(data.answer, data.degraded);
       answerSection.hidden = false;
       renderSources(data.sources);
     } catch (err) {

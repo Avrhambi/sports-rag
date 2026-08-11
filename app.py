@@ -45,7 +45,7 @@ def ask(request: AskRequest) -> AskResponse:
         )
         for c in chunks
     ]
-    return AskResponse(answer=answer, sources=sources)
+    return AskResponse(answer=answer, sources=sources, degraded=plan.degraded)
 
 
 app.mount("/", StaticFiles(directory="static", html=True), name="static")

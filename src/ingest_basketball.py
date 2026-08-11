@@ -183,6 +183,12 @@ def render_markdown(year: int, infobox: dict, box: dict) -> str:
         q_scores = "-".join(str(periods.get(q, "-")) for q in (1, 2, 3, 4))
         return f"{team['teamCity']} {team['teamName']} scored {q_scores} by quarter, final {team['score']}"
 
+    high, low = (home, away) if int(home["score"]) > int(away["score"]) else (away, home)
+    winner_first = (
+        f"{high['teamCity']} {high['teamName']} {high['score']}–{low['score']} "
+        f"{low['teamCity']} {low['teamName']}"
+    )
+
     lines = [f"# {year} NBA Finals (Basketball)", ""]
     lines += ["## Match Info"]
     lines += [
@@ -193,6 +199,9 @@ def render_markdown(year: int, infobox: dict, box: dict) -> str:
         f"- Officials: {officials}",
         f"- Deciding game result: {away['teamCity']} {away['teamName']} {away['score']} – "
         f"{home['teamCity']} {home['teamName']} {home['score']}",
+        # Winner-first, so naming the winner never requires re-ordering the
+        # score -- the step where scorelines came out backwards.
+        f"- Deciding game winner: {winner_first}",
         f"- Quarter-by-quarter score: {quarter_line(away)}; {quarter_line(home)}",
         f"- Series result: {infobox.get('champion', '')} won {infobox.get('champion_games', '')}–"
         f"{infobox.get('runnerup_games', '')} over {infobox.get('runnerup', '')}",
