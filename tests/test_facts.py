@@ -209,6 +209,34 @@ def test_individual_record_is_keyed_by_person_not_by_year():
     assert "did not take part in any of these finals" in block
 
 
+def test_individual_record_states_negatives_outright():
+    """An omitted award clause left "was he MVP?" to be inferred from silence,
+    and the answer hedged instead. A negative the model can copy beats one it
+    has to notice."""
+    finals = [
+        {**BASKETBALL_FINALS[1], "mvp": "Jaylen Brown", "people": [
+            {"name": "Jayson Tatum", "team": "Boston Celtics", "role": "player", "team_result": "won"},
+            {"name": "Luka Dončić", "team": "Dallas Mavericks", "role": "player", "team_result": "lost"},
+        ]},
+    ]
+    block = "\n".join(basketball_block(finals))
+    assert "- Jayson Tatum (player): won 2024 with Boston Celtics; no Finals MVP" in block
+    assert "- Luka Dončić (player): no title; lost 2024 with Dallas Mavericks; no Finals MVP" in block
+
+
+def test_individual_record_omits_awards_where_the_sport_has_none():
+    """Football finals carry no MVP in this corpus, so claiming "no Finals
+    MVP" for a squad would assert something never modelled."""
+    finals = [
+        {**FOOTBALL_FINALS[0], "people": [
+            {"name": "Vinícius Júnior", "team": "Real Madrid", "role": "starter", "team_result": "won"},
+        ]},
+    ]
+    block = "\n".join(football_block(finals))
+    assert "- Vinícius Júnior (starter): won 2022 with Real Madrid" in block
+    assert "MVP" not in block
+
+
 def test_basketball_block_lists_every_scorer_not_a_top_five():
     """A player outside a top-five cap read to the model as a coverage gap."""
     finals = [

@@ -81,6 +81,13 @@ def _individual_honours(finals: list[dict]) -> list[str]:
     answer-shaped row it could find, hit the MVP column, and returned a
     confident "no" while his name sat inside a comma-separated squad a few
     lines above. Keying by person makes that question a lookup.
+
+    Each row also states its negatives outright -- "no title", "no Finals
+    MVP" -- rather than leaving them as a missing clause. A row that simply
+    omitted the award produced a hedge ("it isn't known whether he won
+    individual awards") for a fact the corpus settles, which is the same
+    failure as reading an absent maximum as absent data. A negative the model
+    can copy beats one it has to notice.
     """
     honours: defaultdict[str, dict] = defaultdict(lambda: {"titles": [], "lost": [], "mvp": [], "roles": set()})
     for final in finals:
@@ -95,6 +102,10 @@ def _individual_honours(finals: list[dict]) -> list[str]:
     if not honours:
         return []
 
+    # Only football finals have no MVP in this corpus; stamping "no Finals
+    # MVP" on a football squad would assert something never modelled.
+    tracks_awards = any(final.get("mvp") for final in finals)
+
     header = (
         "Individual record (one row per person; a person absent from this list "
         "did not take part in any of these finals):"
@@ -105,12 +116,18 @@ def _individual_honours(finals: list[dict]) -> list[str]:
         parts = []
         if record["titles"]:
             parts.append("won " + ", ".join(f"{y} with {t}" for y, t in sorted(record["titles"])))
+        else:
+            parts.append("no title")
         if record["lost"]:
             parts.append("lost " + ", ".join(f"{y} with {t}" for y, t in sorted(record["lost"])))
-        if record["mvp"]:
-            parts.append("Finals MVP " + ", ".join(str(y) for y in sorted(record["mvp"])))
+        if tracks_awards:
+            parts.append(
+                "Finals MVP " + ", ".join(str(y) for y in sorted(record["mvp"]))
+                if record["mvp"]
+                else "no Finals MVP"
+            )
         role = "/".join(sorted(record["roles"])) or "player"
-        lines.append(f"- {name} ({role}): {'; '.join(parts) if parts else 'no recorded result'}")
+        lines.append(f"- {name} ({role}): {'; '.join(parts)}")
     return lines
 
 
