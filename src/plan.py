@@ -41,6 +41,12 @@ class QueryPlan(BaseModel):
     # constraint" -- rank by similarity alone.
     years: list[int] = []
     intent: Intent = "factoid"
+    # True when the planner was unavailable and this came from the frozen
+    # regex fallback. That path always reports `factoid`, which silently
+    # switches off the completeness promise, the computed facts block and
+    # whole-sport evidence -- i.e. every closed-world fix in the pipeline.
+    # Callers surface it rather than answering as if nothing had changed.
+    degraded: bool = False
 
     @property
     def sport_filter(self) -> str | None:
@@ -130,16 +136,25 @@ def most_recent_completed_final_year(today: date | None = None) -> int:
     return today.year if today.month >= 7 else today.year - 1
 
 
-def resolve_relative_years(query: str, anchor_year: int) -> set[str]:
+def resolve_relative_years(query: str, anchor_year: int, today: date | None = None) -> set[str]:
     """Translate Hebrew relative-year phrases ("השנה", "שנה שעברה", "בשלוש
     השנים האחרונות") into absolute year strings anchored to `anchor_year`
-    (the most recently completed final)."""
+    (the most recently completed final).
+
+    "This year" and "last year" depend on whether this calendar year's final
+    has already been played -- from July onward it has. The original mapping
+    assumed it had not, so after July it ran a year late: in August 2026 it
+    resolved "השנה" to 2027, a year the corpus cannot hold, and "שנה שעברה"
+    to 2026 rather than 2025."""
     years: set[str] = set()
+    played_this_year = anchor_year == (today or date.today()).year
 
     if _THIS_YEAR.search(query):
-        years.add(str(anchor_year + 1))
-    if _LAST_YEAR.search(query):
+        # Before July there is no final this calendar year yet; the most
+        # recently completed one is the closest thing to what was asked.
         years.add(str(anchor_year))
+    if _LAST_YEAR.search(query):
+        years.add(str(anchor_year - 1 if played_this_year else anchor_year))
     if _LAST_TWO_YEARS.search(query):
         years.update(str(y) for y in range(anchor_year - 1, anchor_year + 1))
 
@@ -175,7 +190,11 @@ def heuristic_plan(question: str) -> QueryPlan:
     the planner exists to avoid -- so callers degrade to plain top-k."""
     years = set(YEAR_PATTERN.findall(question))
     years |= resolve_relative_years(question, most_recent_completed_final_year())
-    return QueryPlan(sport=detect_sport(question), years=sorted(int(y) for y in years))
+    return QueryPlan(
+        sport=detect_sport(question),
+        years=sorted(int(y) for y in years),
+        degraded=True,
+    )
 
 
 # --- Planner ---------------------------------------------------------------
