@@ -410,7 +410,29 @@ body.sport-basketball .pitch-centerline {
   margin: 0;
   font-size: 1.08rem;
   line-height: 1.75;
-  white-space: pre-line;
+}
+
+/* Answers mix Hebrew with Latin club names and scorelines. Without isolation
+   the bidi algorithm reorders those runs against the surrounding RTL text,
+   which can display a scoreline reversed even when the stored text is right. */
+.answer-line {
+  margin: 0 0 0.5em;
+  unicode-bidi: isolate;
+}
+
+.answer-line:last-child {
+  margin-bottom: 0;
+}
+
+.answer-bullet {
+  padding-inline-start: 1.1em;
+  position: relative;
+}
+
+.answer-bullet::before {
+  content: "•";
+  position: absolute;
+  inset-inline-start: 0;
 }
 
 /* ---------- sources: substitution-board tiles ---------- */

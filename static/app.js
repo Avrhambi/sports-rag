@@ -46,6 +46,29 @@
     errorState.hidden = true;
   }
 
+  // The model still emits the occasional Markdown bullet or bold run despite
+  // the prompt asking for plain prose, and textContent rendered the asterisks
+  // literally. Handle the two forms that actually show up -- leading bullets
+  // and **bold** -- as structure, and escape everything else.
+  function renderAnswer(answer) {
+    const escape = (s) =>
+      s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    const inline = (s) => escape(s).replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+
+    answerText.innerHTML = "";
+    for (const raw of answer.split("\n")) {
+      const line = raw.trim();
+      if (!line) continue;
+      const bullet = line.match(/^[*-]\s+(.*)$/);
+      const p = document.createElement("p");
+      // Latin names and scorelines inside RTL Hebrew reorder on screen without
+      // isolation, which can flip "1 - 0" as it is displayed.
+      p.className = bullet ? "answer-line answer-bullet" : "answer-line";
+      p.innerHTML = inline(bullet ? bullet[1] : line);
+      answerText.appendChild(p);
+    }
+  }
+
   function renderSources(sources) {
     sourcesList.innerHTML = "";
     sources.forEach((source, i) => {
@@ -95,7 +118,7 @@
       }
 
       const data = await response.json();
-      answerText.textContent = data.answer;
+      renderAnswer(data.answer);
       answerSection.hidden = false;
       renderSources(data.sources);
     } catch (err) {
