@@ -17,12 +17,7 @@ CHUNKS_PATH = DATA_DIR / "chunks.json"
 FACTS_PATH = DATA_DIR / "facts.json"
 
 EMBEDDING_MODEL_NAME = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
-# The free-tier daily allowance is counted per key AND per model -- the quota
-# Google names when it refuses is `GenerateRequestsPerDayPerProjectPerModel`.
-# So moving to a model the project has not been spending against restores a
-# full 500/day on every configured key, which is worth knowing on a day when
-# evaluation has run the previous model dry.
-GEMINI_MODEL_NAME = "gemini-3.5-flash-lite"
+GEMINI_MODEL_NAME = "gemini-3.1-flash-lite"
 
 def _gemini_keys() -> list[str]:
     """Every configured key, in the order they should be tried.
