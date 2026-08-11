@@ -47,13 +47,19 @@ def plan_evidence_ids(chunks: list[dict], plan: QueryPlan, effective_sport: str 
     question needs each year's whole report -- Match Info for the result,
     Box Score for the stats -- not just its best-matching section.
 
-    With no planned years, only a complex intent widens the net, to every
-    chunk of the planned sport. A superlative with no year in it ("which
-    final had the biggest crowd") still has to see every final to answer.
-    A factoid with no year is left to plain similarity search.
+    With no planned years, the net widens to every chunk of the planned sport
+    -- whatever the intent. A superlative with no year in it ("which final had
+    the biggest crowd") obviously has to see every final, but so does a
+    yearless *factoid*: "מי ניצח בגמר" names no year and no competition, and
+    leaving it to plain similarity search returned an arbitrary top-4, which
+    the answerer then reported as though it were the whole story -- one
+    Champions League final and three NBA ones, with the other six missing and
+    nothing saying so. There is no single final for similarity to find when
+    the question does not point at one, so the honest evidence set is all of
+    them. (This used to be masked: one planner happened to expand a bare
+    "who won the final" to every covered year, and a model change stopped it
+    doing that. The guarantee belongs here, not in a planner's habits.)
     """
-    if not plan.year_strings and plan.intent == "factoid":
-        return set()
     return {
         chunk["id"]
         for chunk in chunks

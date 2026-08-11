@@ -28,8 +28,25 @@ def test_planned_years_span_several_reports():
     }
 
 
-def test_factoid_without_a_year_is_left_to_similarity_search():
-    assert ids(QueryPlan(sport="football", intent="factoid"), "football") == set()
+def test_a_yearless_factoid_still_sees_every_final():
+    """"מי ניצח בגמר" points at no single final, so there is nothing for
+    similarity to find. Left to plain top-k it returned an arbitrary four
+    chunks, which the answerer reported as though they were the whole story."""
+    assert ids(QueryPlan(sport="football", intent="factoid"), "football") == {
+        "f-2022-info",
+        "f-2022-lineups",
+        "f-2024-info",
+    }
+
+
+def test_a_yearless_sportless_factoid_reaches_both_sports():
+    assert ids(QueryPlan(sport="any", intent="factoid")) == {
+        "f-2022-info",
+        "f-2022-lineups",
+        "f-2024-info",
+        "b-2022-info",
+        "b-2024-info",
+    }
 
 
 def test_yearless_aggregate_still_sees_every_final():

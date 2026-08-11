@@ -58,8 +58,11 @@ python -m eval.eval --as-typed   # the same questions, phrased the way users typ
   to an arbitrary top-4), and it reported Boston as losing the 2024 NBA
   Finals, which Boston won, in five runs out of six. `eval.eval` prints the
   model at the top of every run so no result is ever compared across models
-  by accident. Work parked from that experiment lives on the branch
-  `robustness/model-agnostic-joins`, unvalidated on 3.1 and unmerged.
+  by accident. One fix that experiment surfaced was kept, because it is a
+  retrieval guarantee rather than model tuning (see `plan_evidence_ids`
+  below); the rest — cross-sport pre-join tables in `src/facts.py` — is
+  parked on the branch `robustness/model-agnostic-joins`, unvalidated on 3.1
+  and unmerged.
 
 - Embedding model is `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2`
   (local, multilingual, 384-dim) — the same model embeds both the Hebrew query
