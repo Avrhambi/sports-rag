@@ -2,9 +2,8 @@
 
 from datetime import date
 
-from google import genai
-
-from src.config import GEMINI_API_KEY, GEMINI_MODEL_NAME, coverage_summary
+from src import gemini
+from src.config import coverage_summary
 from src.facts import derived_facts_block
 from src.plan import QueryPlan
 
@@ -142,12 +141,10 @@ def build_prompt(question: str, chunks: list[dict], plan: QueryPlan | None = Non
 
 def generate_answer(question: str, chunks: list[dict], plan: QueryPlan | None = None) -> str:
     """Call Gemini to answer `question` in Hebrew, grounded only in `chunks`."""
-    if not GEMINI_API_KEY:
-        raise RuntimeError("GEMINI_API_KEY is not set. Copy .env.example to .env and fill it in.")
+    if not gemini.has_key():
+        raise RuntimeError(
+            "No Gemini API key is set. Copy .env.example to .env and fill in GEMINI_API_KEY_1."
+        )
 
-    client = genai.Client(api_key=GEMINI_API_KEY)
-    response = client.models.generate_content(
-        model=GEMINI_MODEL_NAME,
-        contents=build_prompt(question, chunks, plan),
-    )
+    response = gemini.generate_content(build_prompt(question, chunks, plan))
     return response.text.strip()

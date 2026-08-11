@@ -18,7 +18,27 @@ FACTS_PATH = DATA_DIR / "facts.json"
 
 EMBEDDING_MODEL_NAME = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
 GEMINI_MODEL_NAME = "gemini-3.1-flash-lite"
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
+
+def _gemini_keys() -> list[str]:
+    """Every configured key, in the order they should be tried.
+
+    Free-tier quota is per key per day, so a second key doubles how much
+    evaluation fits in a day -- a full eval run is ~3 calls per question and
+    the limit is 500. `GEMINI_API_KEY` (unnumbered) is still honoured so an
+    existing .env keeps working.
+    """
+    numbered = [os.environ.get(f"GEMINI_API_KEY_{i}", "") for i in range(1, 5)]
+    keys = [*numbered, os.environ.get("GEMINI_API_KEY", "")]
+    seen: list[str] = []
+    for key in (k.strip() for k in keys):
+        if key and key not in seen:
+            seen.append(key)
+    return seen
+
+
+GEMINI_API_KEYS = _gemini_keys()
+# Kept for "is Gemini configured at all" checks.
+GEMINI_API_KEY = GEMINI_API_KEYS[0] if GEMINI_API_KEYS else ""
 
 # Word-based fallback chunk size for any prose section too long to keep as one chunk.
 CHUNK_SIZE_WORDS = 400

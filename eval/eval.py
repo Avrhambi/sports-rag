@@ -6,7 +6,7 @@ Two tiers:
     retrieved context? These need no API key, but with one set they measure
     the real system -- retrieval plans each question through Gemini, and
     without a key it silently falls back to `src.plan.heuristic_plan`.
-  - Generation checks (only run if GEMINI_API_KEY is set): Gemini judges
+  - Generation checks (only run if a Gemini API key is set): Gemini judges
     each generated Hebrew answer for faithfulness and relevance against
     the retrieved context, and for correctness against a reference answer,
     on a 0-1 scale.
@@ -33,9 +33,7 @@ import time
 from collections import defaultdict
 from pathlib import Path
 
-from google import genai
-
-from src.config import GEMINI_API_KEY, GEMINI_MODEL_NAME
+from src import gemini
 from src.generate import generate_answer
 from src.plan import plan_query
 from src.retrieve import retrieve
@@ -113,7 +111,7 @@ def score_generation(item: dict, chunks: list[dict]) -> dict | None:
     no chunks, no API key, rate limit, or a network drop. A full run is ~13
     minutes of paced calls, so one flaky question must not discard the other
     nineteen; the counts printed at the end say how many actually landed."""
-    if not GEMINI_API_KEY or not chunks:
+    if not gemini.has_key() or not chunks:
         return None
 
     try:
@@ -122,7 +120,6 @@ def score_generation(item: dict, chunks: list[dict]) -> dict | None:
         # keeps the eval on the same code path as app.py's /api/ask.
         answer = generate_answer(item["question"], chunks, plan_query(item["question"]))
 
-        client = genai.Client(api_key=GEMINI_API_KEY)
         context = "\n".join(c["text"] for c in chunks)
         judge_prompt = JUDGE_PROMPT.format(
             question=item["question"],
@@ -131,7 +128,7 @@ def score_generation(item: dict, chunks: list[dict]) -> dict | None:
             answer=answer,
         )
         time.sleep(RATE_LIMIT_DELAY_SECONDS)
-        response = client.models.generate_content(model=GEMINI_MODEL_NAME, contents=judge_prompt)
+        response = gemini.generate_content(judge_prompt)
     except Exception as e:  # noqa: BLE001 - transport errors are as skippable as API ones
         print(f"  skipped {item['id']}: {type(e).__name__}: {e}")
         return None
@@ -170,7 +167,7 @@ def main(only: list[str] | None = None) -> None:
     # the same free-tier pacing as the judging loop below.
     retrieval_results = []
     for i, item in enumerate(testset):
-        if GEMINI_API_KEY and i:
+        if gemini.has_key() and i:
             time.sleep(RATE_LIMIT_DELAY_SECONDS)
         retrieval_results.append(score_retrieval(item))
 
@@ -182,8 +179,8 @@ def main(only: list[str] | None = None) -> None:
     print(f"Retrieval - avg expected-keyword coverage: {mean(keyword_coverages):.0%} ({n} questions)")
     print(f"  by type: {breakdown_by_type(list(zip(testset, keyword_coverages)))}")
 
-    if not GEMINI_API_KEY:
-        print("Generation checks skipped - set GEMINI_API_KEY in .env to enable them.")
+    if not gemini.has_key():
+        print("Generation checks skipped - set GEMINI_API_KEY_1 in .env to enable them.")
         return
 
     print(f"Judging {n} generated answers with Gemini (paced for free-tier rate limits, this takes a few minutes)...")

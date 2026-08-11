@@ -19,15 +19,10 @@ from datetime import date
 from functools import lru_cache
 from typing import Literal
 
-from google import genai
 from pydantic import BaseModel
 
-from src.config import (
-    GEMINI_API_KEY,
-    GEMINI_MODEL_NAME,
-    NBA_FINALS_YEARS,
-    UCL_FINALS_YEARS,
-)
+from src import gemini
+from src.config import NBA_FINALS_YEARS, UCL_FINALS_YEARS
 
 Sport = Literal["football", "basketball", "any"]
 Intent = Literal["factoid", "existence", "aggregate", "comparison", "multihop"]
@@ -205,7 +200,7 @@ def plan_query(question: str) -> QueryPlan:
     """Plan retrieval for `question`, falling back to `heuristic_plan` when
     Gemini is unavailable. Cached: the eval and the API can both ask the same
     question more than once, and the plan only depends on the question."""
-    if not GEMINI_API_KEY:
+    if not gemini.has_key():
         return heuristic_plan(question)
 
     prompt = PLANNER_PROMPT.format(
@@ -215,10 +210,8 @@ def plan_query(question: str) -> QueryPlan:
         question=question,
     )
     try:
-        client = genai.Client(api_key=GEMINI_API_KEY)
-        response = client.models.generate_content(
-            model=GEMINI_MODEL_NAME,
-            contents=prompt,
+        response = gemini.generate_content(
+            prompt,
             config={"response_mime_type": "application/json", "response_schema": QueryPlan},
         )
     except Exception as exc:  # noqa: BLE001 - a planner outage must not break search
