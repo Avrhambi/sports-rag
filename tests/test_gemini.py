@@ -102,6 +102,97 @@ def test_every_key_exhausted_raises(monkeypatch):
         gemini.generate_content("hi")
 
 
+def _rate_limited(retry_delay: str | None = "3s") -> genai_errors.ClientError:
+    """A per-minute 429: same status code as the daily one, no "PerDay"."""
+    detail = {"quotaId": "GenerateRequestsPerMinutePerProjectPerModel-FreeTier"}
+    if retry_delay:
+        detail["retryDelay"] = retry_delay
+    return genai_errors.ClientError(429, {"error": {"message": f"RESOURCE_EXHAUSTED {detail}"}})
+
+
+def _daily_exhausted() -> genai_errors.ClientError:
+    return genai_errors.ClientError(
+        429,
+        {"error": {"message": "RESOURCE_EXHAUSTED {'quotaId': "
+                              "'GenerateRequestsPerDayPerProjectPerModel-FreeTier'}"}},
+    )
+
+
+def test_the_two_kinds_of_429_are_told_apart():
+    """Only the daily one is unrecoverable; waiting fixes the other."""
+    assert gemini.is_daily_quota_error(_daily_exhausted())
+    assert not gemini.is_daily_quota_error(_rate_limited())
+    assert gemini.is_quota_error(_rate_limited())
+    assert gemini.retry_after_seconds(_rate_limited("12s")) == 12
+    assert gemini.retry_after_seconds(_daily_exhausted()) is None
+
+
+def test_a_minute_limit_waits_and_retries_the_same_key(monkeypatch):
+    """Rotating away from a good key -- or giving up with every key briefly
+    rate limited -- turns a few seconds' wait into a degraded answer."""
+    used: list[str] = []
+    slept: list[float] = []
+    monkeypatch.setattr(gemini.time, "sleep", lambda s: slept.append(s))
+    monkeypatch.setattr(gemini, "GEMINI_API_KEYS", ["k1", "k2"])
+
+    def factory(api_key: str):
+        def generate_content(self, model, contents, config=None):
+            used.append(api_key)
+            if len(used) == 1:
+                raise _rate_limited("3s")
+            return f"answered with {api_key}"
+
+        return type("Client", (), {"models": type("M", (), {"generate_content": generate_content})()})()
+
+    monkeypatch.setattr(gemini.genai, "Client", factory)
+    assert gemini.generate_content("hi") == "answered with k1"
+    assert used == ["k1", "k1"]  # same key, not the next one
+    assert slept == [3]
+
+
+def test_a_long_or_unstated_wait_moves_on_rather_than_blocking(monkeypatch):
+    """A user waiting on /api/ask should not be held for a minute."""
+    used: list[str] = []
+    slept: list[float] = []
+    monkeypatch.setattr(gemini.time, "sleep", lambda s: slept.append(s))
+    monkeypatch.setattr(gemini, "GEMINI_API_KEYS", ["k1", "k2"])
+
+    def factory(api_key: str):
+        def generate_content(self, model, contents, config=None):
+            used.append(api_key)
+            if api_key == "k1":
+                raise _rate_limited("120s")
+            return f"answered with {api_key}"
+
+        return type("Client", (), {"models": type("M", (), {"generate_content": generate_content})()})()
+
+    monkeypatch.setattr(gemini.genai, "Client", factory)
+    assert gemini.generate_content("hi") == "answered with k2"
+    assert used == ["k1", "k2"]
+    assert slept == []
+
+
+def test_a_daily_exhaustion_rotates_without_waiting(monkeypatch):
+    used: list[str] = []
+    slept: list[float] = []
+    monkeypatch.setattr(gemini.time, "sleep", lambda s: slept.append(s))
+    monkeypatch.setattr(gemini, "GEMINI_API_KEYS", ["k1", "k2"])
+
+    def factory(api_key: str):
+        def generate_content(self, model, contents, config=None):
+            used.append(api_key)
+            if api_key == "k1":
+                raise _daily_exhausted()
+            return f"answered with {api_key}"
+
+        return type("Client", (), {"models": type("M", (), {"generate_content": generate_content})()})()
+
+    monkeypatch.setattr(gemini.genai, "Client", factory)
+    assert gemini.generate_content("hi") == "answered with k2"
+    assert used == ["k1", "k2"]  # tried once, no wait
+    assert slept == []
+
+
 def test_a_non_quota_error_is_not_retried_against_other_keys(monkeypatch):
     """Rotating on a real failure would burn every key on the same bug."""
     used: list[str] = []
