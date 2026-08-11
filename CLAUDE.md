@@ -30,7 +30,8 @@ competition (2022–2026); extend by adding years to `UCL_FINALS_YEARS` /
   retrieved chunks, resolving every question into one of three states:
   supported, false-by-closure (absent from a complete set is an answer, not a
   gap), or outside coverage
-- `app.py` — FastAPI app: `/api/ask`, `/api/health`, serves `static/`
+- `app.py` — FastAPI app: `/api/ask`, `/api/health`, serves `static/`;
+  `resolve_sport()` decides between the UI's sport tab and the question
 - `static/` — hand-written pitch/court-themed UI (no template framework)
 - `eval/` — seed Hebrew Q&A set (one fact per seeded final) + scoring script
 
@@ -42,6 +43,7 @@ cp .env.example .env   # fill in GEMINI_API_KEY_1 (a 2nd key doubles daily quota
 python -m src.ingest   # builds data/faiss.index + data/chunks.json
 uvicorn app:app --reload
 python eval/eval.py    # scores the pipeline against eval/qa_testset.json
+python -m eval.eval --as-typed   # the same questions, phrased the way users type them
 ```
 
 ## Architecture notes
@@ -73,6 +75,26 @@ python eval/eval.py    # scores the pipeline against eval/qa_testset.json
   the planner call fails, but they are frozen — new phrasings belong in the
   planner prompt, not in another regex. The fallback always reports `factoid`
   intent, so callers degrade to plain top-k rather than guessing.
+- **Questions arrive under-specified, and there is no default sport.** Real
+  questions leave things out that the eval set never did: no question mark,
+  no geresh in transliterated names ("גיילן" for "ג'יילן"), "ב5" for "ב-5",
+  and above all no competition — "מי אימן את האלופה ב2024", "מי ניצח בגמר".
+  Planning and retrieval turned out to be robust to every one of those except
+  the missing competition, where the planner picked a sport on a hunch: it
+  chose football for the coach question, a sport this corpus holds no coach
+  aggregates for, so coverage was 0% and the user got a refusal to a question
+  both sports answer. The planner prompt now says outright that there is no
+  default, and `src/generate.py` answers for both competitions and labels
+  each. Keep the disambiguators that genuinely work (a UCL final is one match,
+  an NBA Finals is a series) — the goal is not to widen everything to "any".
+  `eval/qa_testset.json` carries an `as_typed` form of every question and
+  `python -m eval.eval --as-typed` re-runs the set in it, against the same
+  keywords and reference answers, so the two runs compare directly.
+- The UI's sport tab is sticky and the question is not. `resolve_sport()` in
+  `app.py` lets a question that names its competition beat a tab left over
+  from the previous search, and returns `sport_override` so the answer says
+  the tab was set aside. Obeying the tab silently turned an NBA question asked
+  under the כדורגל tab into a refusal over five Champions League chunks.
 - Retrieval re-ranking in `src/retrieve.py`: this embedding model doesn't
   reliably discriminate a specific year, or football vs. basketball, across
   near-identical templated finals reports (5 UCL finals / 5 NBA Finals that
