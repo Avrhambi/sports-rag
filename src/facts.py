@@ -131,28 +131,7 @@ def _individual_honours(finals: list[dict]) -> list[str]:
     return lines
 
 
-def _winning_squads(finals: list[dict]) -> list[str]:
-    """Every person on a winning side, listed under their year. Answers "did
-    this player win?" by reading rather than by joining a roster chunk to a
-    result chunk -- the inference that produced confident wrong negatives."""
-    lines = ["Championship-winning squads (every person named here won that year's title):"]
-    for f in finals:
-        winners = [p for p in f.get("people", []) if p["team_result"] == "won"]
-        if not winners:
-            continue
-        names = ", ".join(
-            f"{p['name']} ({p['role']})" if p["role"] not in ("player", "starter") else p["name"]
-            for p in winners
-        )
-        lines.append(f"- {f['year']} {f['winner']}: {names}")
-    lines.append(
-        "Anyone not named above did not win one of these finals. Anyone not named "
-        "anywhere in these reports did not appear in them at all."
-    )
-    return lines
-
-
-def football_block(finals: list[dict]) -> list[str]:
+def football_block(finals: list[dict], include_people: bool = True) -> list[str]:
     lines = ["### UEFA Champions League finals (computed from structured data)"]
     lines.append("| Year | Winner | Runner-up | Score (winner first) | Margin | Attendance | Venue | Referee |")
     lines.append("|---|---|---|---|---|---|---|---|")
@@ -198,14 +177,13 @@ def football_block(finals: list[dict]) -> list[str]:
 
     lines.append(_distinctness(finals, "referee", "Referees"))
     lines.append(_distinctness(finals, "venue", "Venues"))
-    lines.append("")
-    lines += _winning_squads(finals)
-    lines.append("")
-    lines += _individual_honours(finals)
+    if include_people:
+        lines.append("")
+        lines += _individual_honours(finals)
     return lines
 
 
-def basketball_block(finals: list[dict]) -> list[str]:
+def basketball_block(finals: list[dict], include_people: bool = True) -> list[str]:
     lines = ["### NBA Finals (computed from structured data)"]
     lines.append("| Year | Champion | Runner-up | Series | Deciding game (winner first) | Point margin | MVP | Venue |")
     lines.append("|---|---|---|---|---|---|---|---|")
@@ -291,16 +269,27 @@ def basketball_block(finals: list[dict]) -> list[str]:
         lines.append(f"- {name}: {sum(p for _, p in games)} total ({addends})")
     lines.append("This list covers every player in these box scores; there are no others.")
 
-    lines.append("")
-    lines += _winning_squads(finals)
-    lines.append("")
-    lines += _individual_honours(finals)
+    if include_people:
+        lines.append("")
+        lines += _individual_honours(finals)
     return lines
 
 
-def derived_facts_block(sport: str | None = None, years: set[str] | None = None) -> str:
+def derived_facts_block(
+    sport: str | None = None,
+    years: set[str] | None = None,
+    include_people: bool = False,
+) -> str:
     """A Markdown block of pre-computed aggregates for the selected finals,
-    or "" when there is nothing to compute over."""
+    or "" when there is nothing to compute over.
+
+    `include_people` adds the per-person record. It is ~23k characters across
+    both sports -- more than the rest of the block and every prose chunk
+    combined -- so it is attached only when the question is about a person.
+    Sent unconditionally it pushed a cross-sport prompt from 48k to 72k
+    characters, and answers degraded: a multihop question came back naming
+    "Boston, who lost to the Celtics (Golden State Warriors)".
+    """
     finals = select(sport, years)
     if not finals:
         return ""
@@ -309,9 +298,9 @@ def derived_facts_block(sport: str | None = None, years: set[str] | None = None)
     football = [f for f in finals if f["sport"] == "football"]
     basketball = [f for f in finals if f["sport"] == "basketball"]
     if football:
-        blocks.append(football_block(football))
+        blocks.append(football_block(football, include_people))
     if basketball:
-        blocks.append(basketball_block(basketball))
+        blocks.append(basketball_block(basketball, include_people))
 
     lines = [line for block in blocks for line in [*block, ""]]
     return "\n".join(line for line in lines if line is not None).strip()

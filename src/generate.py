@@ -54,8 +54,8 @@ ENTITY RULES
 - "Won" can mean a team title or an individual award. Asked whether a person
   won, report BOTH: if they won a title, say so, and in the same answer name
   any individual award they took that year — and the reverse. Do not stop at
-  whichever you find first. The "Individual record" row for a person lists
-  every honour they hold in one line; report all of it, not the first clause.
+  whichever you find first. Where a source gives a person's whole record on
+  one line, report all of it rather than its first clause.
 - When a name could refer to more than one person in the covered finals (a
   player and a coach, say), answer for both and say which is which.
 
@@ -122,7 +122,7 @@ def build_prompt(question: str, chunks: list[dict], plan: QueryPlan | None = Non
     if plan and plan.intent != "factoid":
         # Totals, margins and rankings arrive already computed in Python, so
         # the answer never depends on the model adding up a box score.
-        computed = derived_facts_block(sport, plan.year_strings)
+        computed = derived_facts_block(sport, plan.year_strings, plan.asks_about_person)
         if computed:
             # Only promise completeness when something was actually selected.
             # A plan for an uncovered year (2021, say) selects nothing, and

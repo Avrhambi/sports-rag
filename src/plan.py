@@ -36,6 +36,11 @@ class QueryPlan(BaseModel):
     # constraint" -- rank by similarity alone.
     years: list[int] = []
     intent: Intent = "factoid"
+    # True when the question names or asks about a person -- a player, coach,
+    # manager or award winner. The per-person record is the largest thing the
+    # context can carry, so it is attached only when someone is actually
+    # being asked about.
+    asks_about_person: bool = False
     # True when the planner was unavailable and this came from the frozen
     # regex fallback. That path always reports `factoid`, which silently
     # switches off the completeness promise, the computed facts block and
@@ -82,6 +87,11 @@ intent:
 - "comparison": facts from several matches set side by side.
 - "multihop": one match's fact decides which other match to look up (e.g.
   "who coached the NBA champion in the year team X won the Champions League").
+
+asks_about_person: true if the question names or is about a person -- a
+player, a coach or manager, an MVP -- rather than only about teams, venues,
+dates or scores. "Did Jayson Tatum win" is true; "did Barcelona win" and
+"which final had the biggest crowd" are false.
 
 Today is {today}. Both competitions' finals are played in May or June, so the
 season currently underway has no final yet. Resolve relative expressions
