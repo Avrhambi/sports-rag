@@ -50,12 +50,23 @@
   // the prompt asking for plain prose, and textContent rendered the asterisks
   // literally. Handle the two forms that actually show up -- leading bullets
   // and **bold** -- as structure, and escape everything else.
-  function renderAnswer(answer, degraded) {
+  function renderAnswer(answer, degraded, sportOverride) {
     const escape = (s) =>
       s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     const inline = (s) => escape(s).replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
 
     answerText.innerHTML = "";
+    // The tab stays where the last question left it, so it regularly
+    // contradicts the new question. The question wins -- but silently
+    // ignoring the tab is as confusing as silently obeying it.
+    if (sportOverride) {
+      const notice = document.createElement("p");
+      notice.className = "answer-line answer-degraded";
+      notice.textContent =
+        `השאלה היא על ${SPORT_LABELS[sportOverride] ?? sportOverride}, ולכן ענינו מנתוני ` +
+        `${SPORT_LABELS[sportOverride] ?? sportOverride} ולא מהלשונית שנבחרה.`;
+      answerText.appendChild(notice);
+    }
     if (degraded) {
       const notice = document.createElement("p");
       notice.className = "answer-line answer-degraded";
@@ -126,7 +137,7 @@
       }
 
       const data = await response.json();
-      renderAnswer(data.answer, data.degraded);
+      renderAnswer(data.answer, data.degraded, data.sport_override);
       answerSection.hidden = false;
       renderSources(data.sources);
     } catch (err) {
