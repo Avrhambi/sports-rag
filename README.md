@@ -60,11 +60,17 @@ uvicorn app:app --reload      # http://127.0.0.1:8000
 ```bash
 pytest                        # unit tests (Markdown chunking)
 python -m eval.eval           # retrieval + generation quality scores against eval/qa_testset.json
+python -m eval.eval --as-typed  # the same questions phrased the way users type them
 ```
 
 `eval.eval` always runs retrieval checks (sport-match accuracy, expected-keyword
 coverage — no API key needed). With a key set, it also asks Gemini
 to judge each generated answer's faithfulness and relevance.
+
+`--as-typed` re-asks every question in its `as_typed` form — no question mark,
+no geresh in names, "ב5" for "ב-5", often no competition named — against the
+same expected keywords and reference answers, so the two runs compare directly
+and the difference is what the phrasing cost.
 
 ## Key files
 

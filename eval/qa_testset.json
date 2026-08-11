@@ -335,6 +335,32 @@
     "reference_answer": "הקורפוס מכסה רק את משחק ההכרעה של כל סדרה, ולכן ממוצע לסדרה שלמה אינו זמין. במשחק ההכרעה של גמר 2024, שבו בוסטון זכתה, בראון קלע 21 נקודות."
   },
   {
+    "id": "ambiguous-no-competition",
+    "type": "comparison",
+    "question": "מי אימן את הקבוצה שזכתה ב-2024?",
+    "as_typed": "מי אימן את האלופה ב2024",
+    "expected_sport": null,
+    "expected_keywords": [
+      "Champion head coach: Joe Mazzulla",
+      "Real Madrid (Manager: Carlo Ancelotti)"
+    ],
+    "reference_answer": "השאלה לא ציינה ענף, ולכן שתי התשובות: בגמר ליגת האלופות 2024 ריאל מדריד זכתה בהובלת קרלו אנצ'לוטי, ובגמר ה-NBA 2024 בוסטון סלטיקס זכתה בהובלת ג'ו מזולה."
+  },
+  {
+    "id": "ambiguous-no-competition-no-year",
+    "type": "aggregate",
+    "question": "מי ניצח בגמר?",
+    "as_typed": "מי ניצח בגמר",
+    "expected_sport": null,
+    "expected_keywords": [
+      "Liverpool 0–1 Real Madrid",
+      "Paris Saint-Germain 1–1 Arsenal",
+      "Golden State Warriors won 4–2 over Boston Celtics",
+      "New York Knicks won 4–1 over San Antonio Spurs"
+    ],
+    "reference_answer": "השאלה לא ציינה ענף ולא שנה, ולכן כל הגמרים המכוסים: בליגת האלופות ניצחו ריאל מדריד 2022, מנצ'סטר סיטי 2023, ריאל מדריד 2024, פריז סן ז'רמן 2025 ופריז סן ז'רמן 2026; בגמרי ה-NBA ניצחו גולדן סטייט ווריורס 2022, דנבר נאגטס 2023, בוסטון סלטיקס 2024, אוקלהומה סיטי ת'אנדר 2025 וניו יורק ניקס 2026."
+  },
+  {
     "id": "multihop-boston-loss",
     "type": "multihop",
     "question": "בשנים שבוסטון הפסידו באליפות מי זכתה בליגת האלופות?",
