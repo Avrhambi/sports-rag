@@ -38,7 +38,7 @@ competition (2022–2026); extend by adding years to `UCL_FINALS_YEARS` /
 
 ```
 pip install -r requirements.txt
-cp .env.example .env   # fill in GEMINI_API_KEY
+cp .env.example .env   # fill in GEMINI_API_KEY_1 (a 2nd key doubles daily quota)
 python -m src.ingest   # builds data/faiss.index + data/chunks.json
 uvicorn app:app --reload
 python eval/eval.py    # scores the pipeline against eval/qa_testset.json

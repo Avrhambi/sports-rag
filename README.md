@@ -45,7 +45,7 @@ and the English chunks into one shared space, so there's no translation step.
 python -m venv .venv
 .venv/Scripts/activate        # .venv\Scripts\Activate.ps1 on Windows PowerShell
 pip install -r requirements.txt
-cp .env.example .env          # fill in GEMINI_API_KEY
+cp .env.example .env          # fill in GEMINI_API_KEY_1
 ```
 
 ## Run
@@ -63,7 +63,7 @@ python -m eval.eval           # retrieval + generation quality scores against ev
 ```
 
 `eval.eval` always runs retrieval checks (sport-match accuracy, expected-keyword
-coverage — no API key needed). With `GEMINI_API_KEY` set, it also asks Gemini
+coverage — no API key needed). With a key set, it also asks Gemini
 to judge each generated answer's faithfulness and relevance.
 
 ## Key files
