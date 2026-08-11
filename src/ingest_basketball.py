@@ -11,7 +11,11 @@ Wikipedia page via the shared wikitext helpers.
 import re
 import warnings
 
-from nba_api.stats.endpoints import boxscoresummaryv3, boxscoretraditionalv2, leaguegamefinder
+from nba_api.stats.endpoints import (
+    boxscoresummaryv3,
+    boxscoretraditionalv2,
+    leaguegamefinder,
+)
 from nba_api.stats.static import teams as static_teams
 
 from src.config import NBA_FINALS_YEARS
@@ -78,15 +82,28 @@ def build_facts(year: int, infobox: dict, box: dict) -> dict:
     def team_name(team: dict) -> str:
         return f"{team['teamCity']} {team['teamName']}"
 
+    champion = infobox.get("champion", "")
+    runnerup = infobox.get("runnerup", "")
+    # The infobox MVP arrives as "Stephen Curry(Golden State Warriors)",
+    # "Jaylen Brown (Boston Celtics)" or a bare name -- three formats across
+    # five rows, so it never equals a box-score player name and the one
+    # player-to-outcome link in the data could not be joined.
+    mvp = re.sub(r"\s*\(.*\)\s*$", "", infobox.get("MVP", "")).strip()
+
     players = []
     for _, p in box["players"].iterrows():
         if not p["MIN"] or p["MIN"] != p["MIN"]:  # skip DNPs (empty or NaN minutes)
             continue
+        team = team_name(home) if p["TEAM_ID"] == home["teamId"] else team_name(away)
         players.append(
             {
                 "name": p["PLAYER_NAME"],
-                "team": team_name(home) if p["TEAM_ID"] == home["teamId"] else team_name(away),
+                "team": team,
                 "starter": bool(p["START_POSITION"]),
+                # Pre-joined: "did this player win?" is a field lookup, not an
+                # inference across a roster chunk and a result chunk.
+                "team_result": "won" if team == champion else "lost",
+                "is_mvp": p["PLAYER_NAME"] == mvp,
                 "points": int(p["PTS"]),
                 "rebounds": int(p["REB"]),
                 "assists": int(p["AST"]),
@@ -95,12 +112,37 @@ def build_facts(year: int, infobox: dict, box: dict) -> dict:
 
     champion_games = infobox.get("champion_games", "")
     runnerup_games = infobox.get("runnerup_games", "")
+    people = [
+        {"name": p["name"], "team": p["team"], "role": "player", "team_result": p["team_result"]}
+        for p in players
+    ]
+    for coach_field, team, result in (
+        ("champion_coach", champion, "won"),
+        ("runnerup_coach", runnerup, "lost"),
+    ):
+        if infobox.get(coach_field):
+            people.append(
+                {"name": infobox[coach_field], "team": team, "role": "head coach", "team_result": result}
+            )
+
     return {
         "sport": "basketball",
         "competition": "NBA Finals",
         "year": year,
-        "champion": infobox.get("champion", ""),
-        "runnerup": infobox.get("runnerup", ""),
+        # Shared vocabulary with the football records.
+        "winner": champion,
+        "loser": runnerup,
+        "participants": [team_name(away), team_name(home)],
+        "margin": abs(int(home["score"]) - int(away["score"])),
+        "result_line": (
+            f"{champion} beat {runnerup} {champion_games}-{runnerup_games} in the series"
+            if champion_games
+            else f"{champion} beat {runnerup}"
+        ),
+        "people": people,
+        # Basketball-specific.
+        "champion": champion,
+        "runnerup": runnerup,
         "series_score": f"{champion_games}-{runnerup_games}" if champion_games else None,
         "games_played": (
             int(champion_games) + int(runnerup_games)
@@ -109,15 +151,22 @@ def build_facts(year: int, infobox: dict, box: dict) -> dict:
         ),
         "champion_coach": infobox.get("champion_coach", ""),
         "runnerup_coach": infobox.get("runnerup_coach", ""),
-        "mvp": infobox.get("MVP", ""),
+        "mvp": mvp,
         "venue": summary["arena"]["arenaName"],
         "attendance": int(summary["attendance"]) if str(summary["attendance"]).isdigit() else None,
+        "officials": [o["name"] for o in summary["officials"]],
         "deciding_game": {
             "home_team": team_name(home),
             "away_team": team_name(away),
             "home_score": int(home["score"]),
             "away_score": int(away["score"]),
             "point_margin": abs(int(home["score"]) - int(away["score"])),
+            # Pre-oriented, like the football scoreline.
+            "score_winner_first": (
+                f"{team_name(home)} {home['score']}–{away['score']} {team_name(away)}"
+                if int(home["score"]) > int(away["score"])
+                else f"{team_name(away)} {away['score']}–{home['score']} {team_name(home)}"
+            ),
         },
         "players": players,
     }

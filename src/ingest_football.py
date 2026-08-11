@@ -10,6 +10,7 @@ wikitext directly via the MediaWiki API (no HTML scraping, no browser).
 """
 
 import re
+from collections import Counter
 
 from src.config import UCL_FINALS_YEARS
 from src.wikitext import clean_wikitext as _clean_generic
@@ -210,6 +211,64 @@ def parse_score(score: str) -> tuple[int, int] | None:
     return (int(match.group(1)), int(match.group(2))) if match else None
 
 
+def full_name_index(lineups: dict) -> dict[str, str]:
+    """Map every unambiguous surname in the two squads to the player's full
+    name. Shootout and goal lines carry only the wikilink display text, often
+    a bare surname, and the model was filling the first name in from outside
+    knowledge -- right for famous players, silently wrong for the rest.
+    Surnames shared by two players in the match are left unexpanded."""
+    full_names = [
+        p["player"]
+        for team in ("team1", "team2")
+        for group in ("starters", "substitutes")
+        for p in lineups[team][group]
+        if p["player"]
+    ]
+    surname_counts = Counter(name.split()[-1] for name in full_names if name.split())
+    index = {name: name for name in full_names}
+    for name in full_names:
+        surname = name.split()[-1] if name.split() else ""
+        if surname and surname != name and surname_counts[surname] == 1:
+            index[surname] = name
+    return index
+
+
+def resolve_name(name: str, index: dict[str, str]) -> str:
+    return index.get(name.strip(), name)
+
+
+def build_people(match: dict, winner: str | None) -> list[dict]:
+    """One row per person in the match, each already carrying the outcome of
+    the team they played for. Without `team_result` the only way to answer
+    "did this player win?" is to join a roster chunk to a result chunk, which
+    is exactly the inference that produced confident wrong answers."""
+    people = []
+    for team_key in ("team1", "team2"):
+        team_name = match[team_key]
+        column = match["lineups"][team_key]
+        result = "won" if winner and team_name == winner else "lost"
+        for role, group in (("starter", "starters"), ("substitute", "substitutes")):
+            for player in column[group]:
+                people.append(
+                    {
+                        "name": player["player"],
+                        "team": team_name,
+                        "role": role,
+                        "team_result": result,
+                    }
+                )
+        if column["manager"]:
+            people.append(
+                {
+                    "name": column["manager"],
+                    "team": team_name,
+                    "role": "manager",
+                    "team_result": result,
+                }
+            )
+    return people
+
+
 def build_facts(year: int, match: dict) -> dict:
     """Flatten a parsed final into one row of structured, arithmetic-ready
     facts. The Markdown report is for reading; this is for counting, and
@@ -222,22 +281,67 @@ def build_facts(year: int, match: dict) -> dict:
         winner = match["team1"] if goals[0] > goals[1] else match["team2"]
     elif penalties and penalties[0] != penalties[1]:
         winner = match["team1"] if penalties[0] > penalties[1] else match["team2"]
+    loser = (match["team2"] if winner == match["team1"] else match["team1"]) if winner else None
+
+    # Pre-orient the scoreline. `score` is "0–1" against team1/team2 order; an
+    # answer that names the winner first and then quotes that string reports
+    # the result backwards, which was the single most frequent wrong fact.
+    score_winner_first = None
+    if goals and winner:
+        high, low = max(goals), min(goals)
+        if goals[0] == goals[1] and penalties:
+            score_winner_first = (
+                f"{winner} {goals[0]}–{goals[1]} {loser} after extra time, "
+                f"{winner} won {max(penalties)}–{min(penalties)} on penalties"
+            )
+        else:
+            score_winner_first = f"{winner} {high}–{low} {loser}"
 
     attendance = match["attendance"].replace(",", "").strip()
+    name_index = full_name_index(match["lineups"])
     return {
         "sport": "football",
         "competition": "UEFA Champions League",
         "year": year,
+        # Shared vocabulary across both sports, so a cross-sport question is a
+        # lookup on the same key names rather than a per-sport special case.
+        "winner": winner,
+        "loser": loser,
+        "participants": [match["team1"], match["team2"]],
+        "margin": abs(goals[0] - goals[1]) if goals else None,
+        "result_line": score_winner_first,
+        "people": build_people(match, winner),
+        # Football-specific.
         "team1": match["team1"],
         "team2": match["team2"],
         "score": match["score"],
+        "score_winner_first": score_winner_first,
         "goals1": goals[0] if goals else None,
         "goals2": goals[1] if goals else None,
         "goal_margin": abs(goals[0] - goals[1]) if goals else None,
-        "winner": winner,
-        "loser": (match["team2"] if winner == match["team1"] else match["team1"]) if winner else None,
+        # Goal lines already carry a full name plus the minute.
+        "scorers": [
+            {"goal": goal, "team": team}
+            for team, entries in (
+                (match["team1"], match["goals1"]),
+                (match["team2"], match["goals2"]),
+            )
+            for goal in entries
+        ],
         "decided_on_penalties": bool(penalties),
         "penalty_score": match["penalty_score"] or None,
+        "penalty_takers": [
+            {
+                "player": resolve_name(kick["player"], name_index),
+                "team": team,
+                "scored": kick["scored"],
+            }
+            for team, kicks in (
+                (match["team1"], match["penalties1"]),
+                (match["team2"], match["penalties2"]),
+            )
+            for kick in kicks
+        ],
         "after_extra_time": match["after_extra_time"],
         "venue": match["stadium"],
         "attendance": int(attendance) if attendance.isdigit() else None,

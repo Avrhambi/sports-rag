@@ -1,5 +1,5 @@
 from src.facts import basketball_block, football_block
-from src.ingest_football import build_facts, parse_score
+from src.ingest_football import build_facts, full_name_index, parse_score
 
 FOOTBALL_FINALS = [
     {
@@ -58,13 +58,25 @@ def test_parse_score_reads_an_en_dash_scoreline():
     assert parse_score("") is None
 
 
-def test_build_facts_awards_a_drawn_final_to_the_shootout_winner():
+EMPTY_LINEUPS = {
+    "team1": {"starters": [], "substitutes": [], "manager": ""},
+    "team2": {"starters": [], "substitutes": [], "manager": ""},
+}
+
+
+def _match(**overrides) -> dict:
     match = {
         "team1": "Paris Saint-Germain", "team2": "Arsenal", "score": "1–1",
         "penalty_score": "4–3", "after_extra_time": True, "attendance": "61,035",
         "stadium": "Puskás Aréna", "referee": "Daniel Siebert",
+        "goals1": [], "goals2": [], "penalties1": [], "penalties2": [],
+        "lineups": EMPTY_LINEUPS,
     }
-    facts = build_facts(2026, match)
+    return {**match, **overrides}
+
+
+def test_build_facts_awards_a_drawn_final_to_the_shootout_winner():
+    facts = build_facts(2026, _match())
     assert facts["winner"] == "Paris Saint-Germain"
     assert facts["loser"] == "Arsenal"
     assert facts["goal_margin"] == 0
@@ -72,14 +84,74 @@ def test_build_facts_awards_a_drawn_final_to_the_shootout_winner():
     assert facts["attendance"] == 61035
 
 
-def test_football_block_counts_titles_across_finals():
+def test_build_facts_orients_the_scoreline_winner_first():
+    """`score` is stored team1-first; an answer that names the winner first
+    and then quotes it reports the match backwards."""
+    facts = build_facts(2022, _match(team1="Liverpool", team2="Real Madrid", score="0–1", penalty_score=""))
+    assert facts["winner"] == "Real Madrid"
+    assert facts["score_winner_first"] == "Real Madrid 1–0 Liverpool"
+    assert facts["result_line"] == "Real Madrid 1–0 Liverpool"
+
+
+def test_build_facts_spells_out_a_shootout_in_the_oriented_score():
+    assert facts_shootout_line().startswith("Paris Saint-Germain 1–1 Arsenal after extra time")
+    assert "won 4–3 on penalties" in facts_shootout_line()
+
+
+def facts_shootout_line() -> str:
+    return build_facts(2026, _match())["score_winner_first"]
+
+
+def test_build_facts_attaches_the_team_outcome_to_every_person():
+    """"Did this player win?" has to be a field, not a join across chunks."""
+    lineups = {
+        "team1": {"starters": [{"player": "Bukayo Saka"}], "substitutes": [], "manager": "Mikel Arteta"},
+        "team2": {"starters": [{"player": "Ousmane Dembélé"}], "substitutes": [], "manager": "Luis Enrique"},
+    }
+    people = build_facts(2026, _match(team1="Arsenal", team2="Paris Saint-Germain",
+                                      penalty_score="3–4", lineups=lineups))["people"]
+    by_name = {p["name"]: p for p in people}
+    assert by_name["Ousmane Dembélé"]["team_result"] == "won"
+    assert by_name["Bukayo Saka"]["team_result"] == "lost"
+    assert by_name["Luis Enrique"]["role"] == "manager"
+
+
+def test_full_name_index_expands_only_unambiguous_surnames():
+    lineups = {
+        "team1": {"starters": [{"player": "Nuno Mendes"}, {"player": "Gabriel Jesus"}],
+                  "substitutes": [], "manager": ""},
+        "team2": {"starters": [{"player": "Gabriel Magalhães"}], "substitutes": [], "manager": ""},
+    }
+    index = full_name_index(lineups)
+    assert index["Mendes"] == "Nuno Mendes"
+    # "Gabriel" is a first name shared by two players -- leave it alone rather
+    # than guess, which is how a wrong player gets attached to a penalty.
+    assert "Gabriel" not in index
+
+
+def test_football_block_counts_titles_with_the_years_behind_them():
     block = "\n".join(football_block(FOOTBALL_FINALS))
-    assert "Titles won: Paris Saint-Germain 2, Real Madrid 1" in block
+    assert "Titles won: Paris Saint-Germain 2 (2025, 2026); Real Madrid 1 (2022)" in block
+
+
+def test_football_block_attributes_losses_to_years():
+    """A bare loss count made the model guess which years, and it guessed a
+    year the team had actually won."""
+    block = "\n".join(football_block(FOOTBALL_FINALS))
+    assert "Inter Milan 1 (2025)" in block
+    assert "Liverpool 1 (2022)" in block
+
+
+def test_football_block_states_when_values_are_all_distinct():
+    """Silence on "no maximum" read as missing data, so the model refused and
+    then printed the full list it had just called unavailable."""
+    block = "\n".join(football_block(FOOTBALL_FINALS))
+    assert "Venues: all 3 distinct" in block
 
 
 def test_football_block_picks_the_widest_margin_and_biggest_crowd():
     block = "\n".join(football_block(FOOTBALL_FINALS))
-    assert "Largest goal margin: 2025 (5" in block
+    assert "Largest goal margin: 2025, 5 goals" in block
     assert "Highest attendance: 2022 (75,000" in block
 
 
@@ -104,8 +176,26 @@ def test_basketball_block_separates_single_game_highs_from_multi_year_sums():
 
 def test_basketball_block_ranks_margins_and_series_length():
     block = "\n".join(basketball_block(BASKETBALL_FINALS))
-    assert "Largest deciding-game margin: 2024 (18 points)" in block
-    assert "Longest series: 2022 (6 games, 4-2)" in block
+    assert "Largest deciding-game margin: 2024, 18 points" in block
+    assert "Longest series: 2022 (6 games, Golden State Warriors beat Boston Celtics 4-2)" in block
+
+
+def test_basketball_block_pre_joins_series_length_with_the_teams():
+    """The bare "2022 (4-2)" list left the champion out of the answer."""
+    block = "\n".join(basketball_block(BASKETBALL_FINALS))
+    assert "- 2022: 6 games — Golden State Warriors beat Boston Celtics 4-2" in block
+
+
+def test_basketball_block_lists_every_scorer_not_a_top_five():
+    """A player outside a top-five cap read to the model as a coverage gap."""
+    finals = [
+        {**BASKETBALL_FINALS[0], "players": [
+            {"name": f"Player {i}", "points": 30 - i} for i in range(8)
+        ]},
+    ]
+    block = "\n".join(basketball_block(finals))
+    assert "Player 7: 23 total" in block
+    assert "there are no others" in block
 
 
 def test_basketball_block_names_the_single_game_high():

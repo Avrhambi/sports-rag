@@ -38,41 +38,91 @@ def select(sport: str | None = None, years: set[str] | None = None) -> list[dict
     return sorted(selected, key=lambda f: f["year"])
 
 
-def _tally(counts: Counter, noun: str) -> str:
-    ranked = ", ".join(f"{name} {n}" for name, n in counts.most_common() if name)
-    return f"{noun}: {ranked}" if ranked else ""
+def _tally_with_years(finals: list[dict], key: str, noun: str) -> str:
+    """`Team 2 (2022, 2024)` -- the count and the years that make it up. A
+    bare count forced the model to go looking for which years, and it guessed
+    wrong (it once put Boston among the 2024 losers, the year Boston won)."""
+    by_value: defaultdict[str, list[int]] = defaultdict(list)
+    unknown = 0
+    for f in finals:
+        value = f.get(key)
+        if value:
+            by_value[value].append(f["year"])
+        else:
+            unknown += 1
+    if not by_value:
+        return ""
+    ranked = sorted(by_value.items(), key=lambda kv: (-len(kv[1]), kv[0]))
+    body = "; ".join(f"{name} {len(years)} ({', '.join(str(y) for y in sorted(years))})" for name, years in ranked)
+    # An unparsed row would otherwise vanish and the undercount would read as a fact.
+    suffix = f" [{unknown} final(s) with no recorded {key}]" if unknown else ""
+    return f"{noun}: {body}{suffix}"
+
+
+def _distinctness(finals: list[dict], key: str, noun: str) -> str:
+    """State explicitly when every value is different. Without this the model
+    read "no maximum in the computed block" as "the data is missing", declared
+    it could not answer, and then printed all five values."""
+    counts = Counter(f[key] for f in finals if f.get(key))
+    if not counts:
+        return ""
+    repeats = [f"{name} ({n})" for name, n in counts.most_common() if n > 1]
+    if repeats:
+        return f"{noun} appearing more than once: {', '.join(repeats)}"
+    return f"{noun}: all {len(counts)} distinct — none appears more than once, so there is no maximum"
+
+
+def _winning_squads(finals: list[dict]) -> list[str]:
+    """Every person on a winning side, listed under their year. Answers "did
+    this player win?" by reading rather than by joining a roster chunk to a
+    result chunk -- the inference that produced confident wrong negatives."""
+    lines = ["Championship-winning squads (every person named here won that year's title):"]
+    for f in finals:
+        winners = [p for p in f.get("people", []) if p["team_result"] == "won"]
+        if not winners:
+            continue
+        names = ", ".join(
+            f"{p['name']} ({p['role']})" if p["role"] not in ("player", "starter") else p["name"]
+            for p in winners
+        )
+        lines.append(f"- {f['year']} {f['winner']}: {names}")
+    lines.append(
+        "Anyone not named above did not win one of these finals. Anyone not named "
+        "anywhere in these reports did not appear in them at all."
+    )
+    return lines
 
 
 def football_block(finals: list[dict]) -> list[str]:
     lines = ["### UEFA Champions League finals (computed from structured data)"]
-    lines.append("| Year | Result | Winner | Goal margin | Attendance |")
-    lines.append("|---|---|---|---|---|")
+    lines.append("| Year | Winner | Runner-up | Score (winner first) | Margin | Attendance | Venue | Referee |")
+    lines.append("|---|---|---|---|---|---|---|---|")
     for f in finals:
-        result = f"{f['team1']} {f['score']} {f['team2']}"
-        if f["decided_on_penalties"]:
-            result += f" (penalties {f['penalty_score']})"
         lines.append(
-            f"| {f['year']} | {result} | {f['winner'] or '-'} | "
+            f"| {f['year']} | {f['winner'] or '-'} | {f['loser'] or '-'} | "
+            f"{f.get('score_winner_first') or f['score']} | "
             f"{f['goal_margin'] if f['goal_margin'] is not None else '-'} | "
-            f"{f['attendance'] if f['attendance'] is not None else '-'} |"
+            f"{f['attendance'] if f['attendance'] is not None else '-'} | "
+            f"{f.get('venue') or '-'} | {f.get('referee') or '-'} |"
         )
 
     lines.append("")
-    lines.append(_tally(Counter(f["winner"] for f in finals), "Titles won"))
-    lines.append(_tally(Counter(f["loser"] for f in finals), "Finals lost"))
+    lines.append(_tally_with_years(finals, "winner", "Titles won"))
+    lines.append(_tally_with_years(finals, "loser", "Finals lost"))
 
-    appearances = Counter()
+    appearances: defaultdict[str, list[int]] = defaultdict(list)
     for f in finals:
-        appearances.update({f["team1"], f["team2"]})
-    repeats = [f"{team} {n}" for team, n in appearances.most_common() if n > 1]
+        for team in {f["team1"], f["team2"]}:
+            appearances[team].append(f["year"])
+    repeats = [f"{t} ({', '.join(str(y) for y in sorted(ys))})" for t, ys in appearances.items() if len(ys) > 1]
     lines.append(f"Teams in more than one final: {', '.join(repeats) if repeats else 'none'}")
 
     with_margin = [f for f in finals if f["goal_margin"] is not None]
     if with_margin:
         widest = max(with_margin, key=lambda f: f["goal_margin"])
         lines.append(
-            f"Largest goal margin: {widest['year']} ({widest['goal_margin']}, "
-            f"{widest['team1']} {widest['score']} {widest['team2']})"
+            f"Largest goal margin: {widest['year']}, {widest['goal_margin']} goals "
+            f"({widest.get('score_winner_first') or widest['score']})"
         )
 
     shootouts = [str(f["year"]) for f in finals if f["decided_on_penalties"]]
@@ -86,40 +136,58 @@ def football_block(finals: list[dict]) -> list[str]:
             f"Highest attendance: {biggest['year']} ({biggest['attendance']:,} at {biggest['venue']}); "
             f"lowest: {smallest['year']} ({smallest['attendance']:,})"
         )
+
+    lines.append(_distinctness(finals, "referee", "Referees"))
+    lines.append(_distinctness(finals, "venue", "Venues"))
+    lines.append("")
+    lines += _winning_squads(finals)
     return lines
 
 
 def basketball_block(finals: list[dict]) -> list[str]:
     lines = ["### NBA Finals (computed from structured data)"]
-    lines.append("| Year | Champion | Series | Deciding game | Point margin | MVP |")
-    lines.append("|---|---|---|---|---|---|")
+    lines.append("| Year | Champion | Runner-up | Series | Deciding game (winner first) | Point margin | MVP | Venue |")
+    lines.append("|---|---|---|---|---|---|---|---|")
     for f in finals:
         game = f["deciding_game"]
-        score = (
-            f"{game['away_team']} {game['away_score']} – "
-            f"{game['home_team']} {game['home_score']}"
+        score = game.get("score_winner_first") or (
+            f"{game['away_team']} {game['away_score']} – {game['home_team']} {game['home_score']}"
         )
         lines.append(
-            f"| {f['year']} | {f['champion']} | {f['series_score'] or '-'} | {score} | "
-            f"{game['point_margin']} | {f['mvp']} |"
+            f"| {f['year']} | {f['champion']} | {f['runnerup']} | {f['series_score'] or '-'} | "
+            f"{score} | {game['point_margin']} | {f['mvp']} | {f.get('venue') or '-'} |"
         )
 
     lines.append("")
-    lines.append(_tally(Counter(f["champion"] for f in finals), "Titles won"))
-    lines.append(_tally(Counter(f["runnerup"] for f in finals), "Finals lost"))
+    lines.append(_tally_with_years(finals, "champion", "Titles won"))
+    lines.append(_tally_with_years(finals, "runnerup", "Finals lost"))
+
+    # Pre-joined so a "which series went N games" question is read off a row
+    # rather than assembled from a Series column and a Champion column.
+    lines.append("Series length, with the teams:")
+    for f in sorted(finals, key=lambda f: f["year"]):
+        if f["games_played"]:
+            lines.append(
+                f"- {f['year']}: {f['games_played']} games — {f['champion']} beat "
+                f"{f['runnerup']} {f['series_score']}"
+            )
 
     longest = [f for f in finals if f["games_played"]]
     if longest:
         most = max(longest, key=lambda f: f["games_played"])
         lines.append(
-            f"Longest series: {most['year']} ({most['games_played']} games, {most['series_score']})"
+            f"Longest series: {most['year']} ({most['games_played']} games, {most['champion']} "
+            f"beat {most['runnerup']} {most['series_score']})"
         )
 
     widest = max(finals, key=lambda f: f["deciding_game"]["point_margin"])
     lines.append(
-        f"Largest deciding-game margin: {widest['year']} "
-        f"({widest['deciding_game']['point_margin']} points)"
+        f"Largest deciding-game margin: {widest['year']}, {widest['deciding_game']['point_margin']} "
+        f"points ({widest['deciding_game'].get('score_winner_first')})"
     )
+
+    lines.append(_distinctness(finals, "venue", "Venues"))
+    lines.append(_tally_with_years(finals, "mvp", "Finals MVP awards"))
 
     # Deciding games only -- the corpus holds no other game of each series.
     #
@@ -152,10 +220,18 @@ def basketball_block(finals: list[dict]) -> list[str]:
         "Multi-year sums (one player's points added across the deciding games "
         "above -- a total over several years, never a single-game score):"
     )
+    # No rank cap: truncating to a top five made a player outside it look like
+    # a coverage gap, and the model reported missing data for a question the
+    # box scores answer in full. At ten finals the whole table is a few dozen
+    # lines, so completeness costs less than the hedging did.
     totals = sorted(per_player.items(), key=lambda kv: sum(p for _, p in kv[1]), reverse=True)
-    for name, games in totals[:5]:
+    for name, games in totals:
         addends = " + ".join(f"{year}: {points}" for year, points in sorted(games))
         lines.append(f"- {name}: {sum(p for _, p in games)} total ({addends})")
+    lines.append("This list covers every player in these box scores; there are no others.")
+
+    lines.append("")
+    lines += _winning_squads(finals)
     return lines
 
 
