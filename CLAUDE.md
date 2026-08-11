@@ -27,7 +27,9 @@ competition (2022–2026); extend by adding years to `UCL_FINALS_YEARS` /
 - `src/retrieve.py` — embed a Hebrew query, FAISS search, sport filtering, plus
   plan-driven guaranteed inclusion and a re-rank boost (see Architecture notes)
 - `src/generate.py` — Gemini prompt that answers in Hebrew grounded only in
-  retrieved chunks
+  retrieved chunks, resolving every question into one of three states:
+  supported, false-by-closure (absent from a complete set is an answer, not a
+  gap), or outside coverage
 - `app.py` — FastAPI app: `/api/ask`, `/api/health`, serves `static/`
 - `static/` — hand-written pitch/court-themed UI (no template framework)
 - `eval/` — seed Hebrew Q&A set (one fact per seeded final) + scoring script
@@ -81,6 +83,17 @@ python eval/eval.py    # scores the pipeline against eval/qa_testset.json
   mode. Also avoid very short, mostly-numeric standalone chunks (e.g. a bare
   quarter-score table) — they can score anomalously high against unrelated
   queries; fold that data into a richer text chunk instead.
+- **Pre-join in Python; never make the model derive a relationship.** Every
+  wrong fact this system has produced came from asking it to derive rather
+  than read: it reversed scorelines re-narrating `0–1` winner-first, said a
+  player never won while holding his roster and his team's title in separate
+  chunks, and put a team among one year's losers because the tally carried
+  counts but no years. So `build_facts()` emits a winner-first scoreline,
+  `team_result` on every person, and tallies with their years, and
+  `src/facts.py` renders rows shaped like the answer rather than columns to
+  be joined. When adding a computed line, check it cannot be mistaken for an
+  adjacent one — a multi-year points sum printed beside a single-game high
+  once got returned as the answer to "most points in a game".
 - Two parallel tracks come out of ingestion: prose chunks for retrieval, and
   `data/facts.json` — one flat structured record per final (result, margin,
   attendance, per-player points) built by `build_facts()` in each ingester.
